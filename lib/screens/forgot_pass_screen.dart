@@ -1,9 +1,19 @@
+// screens/forgot_pass_screen.dart
 import 'package:flutter/material.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
 
-class ForgotPassScreen extends StatelessWidget {
+class ForgotPassScreen extends StatefulWidget {
   const ForgotPassScreen({super.key});
+
+  @override
+  _ForgotPassScreenState createState() => _ForgotPassScreenState();
+}
+
+class _ForgotPassScreenState extends State<ForgotPassScreen> {
+  final TextEditingController _emailController = TextEditingController();
+
+  // Add your Firebase password reset logic here
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +21,7 @@ class ForgotPassScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context), // Back button
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
@@ -24,14 +34,15 @@ class ForgotPassScreen extends StatelessWidget {
                 title: "Forgot Password",
               ),
               const SizedBox(height: 32),
-              const AuthTextField(
+              AuthTextField(
                 hint: "Email",
                 icon: Icons.email_outlined,
+                controller: _emailController,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  // Add Firebase password reset logic here
+                  // Example: FirebaseAuth.instance.sendPasswordResetEmail(email: _emailController.text.trim());
                 },
                 child: const Text("Send Reset Link"),
               ),

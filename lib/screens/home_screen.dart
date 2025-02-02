@@ -1,31 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import '../widgets/background_container.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("cabins");
+
+  @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    String nickname = user?.displayName ?? (user?.email?.split('@')[0] ?? 'User');
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('A-Frame Rentals'),
-      ),
-      body: ListView(
-        children: [
-          // We'll add A-Frame listings here later
-          ListTile(
-            title: const Text('Beautiful A-Frame Cabin'),
-            subtitle: const Text('\$150 per night'),
-            leading: Image.network(
-              'https://via.placeholder.com/150', // Placeholder image
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-            ),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
             onTap: () {
-              // Navigate to property details later
+              Navigator.pushNamed(context, '/profile');
             },
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, color: Theme.of(context).primaryColor),
+            ),
           ),
-        ],
+        ),
+        title: Text('Welcome back, $nickname!'),
+      ),
+      body: BackgroundContainer(
+        child: StreamBuilder<DatabaseEvent>(
+          stream: _dbRef.onValue,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+              return const Center(
+                child: Text(
+                  'No cabins added yet.\nGo to your profile to add one!',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+
+            final Map<dynamic, dynamic> cabins =
+            (snapshot.data!.snapshot.value as Map<dynamic, dynamic>);
+
+            return ListView(
+              children: cabins.entries.map((entry) {
+                final Map cabinData = entry.value;
+                return Card(
+                  margin: const EdgeInsets.all(12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        child: Image.network(
+                          cabinData['imageUrl'],
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text(cabinData['title'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                        child: Text(
+                          '\$${cabinData['price']} per night',
+                          style: const TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
       ),
     );
   }

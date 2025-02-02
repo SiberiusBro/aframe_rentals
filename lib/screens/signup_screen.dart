@@ -1,9 +1,21 @@
+// screens/signup_screen.dart
 import 'package:flutter/material.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
 
-class SignupScreen extends StatelessWidget {
+class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
+
+  @override
+  _SignupScreenState createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Add your sign-up logic here
 
   @override
   Widget build(BuildContext context) {
@@ -22,24 +34,29 @@ class SignupScreen extends StatelessWidget {
             children: [
               const AuthHeader(title: "Create Account"),
               const SizedBox(height: 32),
-              const AuthTextField(
+              AuthTextField(
                 hint: "Full Name",
                 icon: Icons.person_outline,
+                controller: _fullNameController,
               ),
               const SizedBox(height: 16),
-              const AuthTextField(
+              AuthTextField(
                 hint: "Email",
                 icon: Icons.email_outlined,
+                controller: _emailController,
               ),
               const SizedBox(height: 16),
-              const AuthTextField(
+              AuthTextField(
                 hint: "Password",
                 icon: Icons.lock_outline,
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Add your sign-up logic (using the controllers) here
+                },
                 child: const Text("Sign Up"),
               ),
             ],

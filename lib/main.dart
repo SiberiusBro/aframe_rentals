@@ -1,13 +1,14 @@
-// main.dart
+// lib/main.dart
+import 'package:aframe_rentals/screens/add_cabin_screen.dart';
 import 'package:aframe_rentals/screens/forgot_pass_screen.dart';
 import 'package:aframe_rentals/screens/login_screen.dart';
+import 'package:aframe_rentals/screens/manage_cabins_screen.dart';
+import 'package:aframe_rentals/screens/profile_screen.dart';
 import 'package:aframe_rentals/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
-
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'A-Frame Rentals',
       theme: ThemeData(
-        primarySwatch: Colors.indigo, // Modern indigo theme
+        primarySwatch: Colors.indigo,
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -46,6 +47,9 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/signup': (context) => const SignupScreen(),
         '/forgot_password': (context) => const ForgotPassScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/add_cabin': (context) => const AddCabinScreen(),
+        '/manage_cabins': (context) => const ManageCabinsScreen(),
       },
     );
   }

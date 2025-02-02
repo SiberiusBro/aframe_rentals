@@ -49,6 +49,7 @@ class DefaultFirebaseOptions {
     authDomain: 'afframe-rental.firebaseapp.com',
     storageBucket: 'afframe-rental.firebasestorage.app',
     measurementId: 'G-HRHS1WJ43W',
+    databaseURL: 'https://afframe-rental-default-rtdb.firebaseio.com/',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -57,6 +58,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '133494651804',
     projectId: 'afframe-rental',
     storageBucket: 'afframe-rental.firebasestorage.app',
+    databaseURL: 'https://afframe-rental-default-rtdb.firebaseio.com/',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -66,6 +68,7 @@ class DefaultFirebaseOptions {
     projectId: 'afframe-rental',
     storageBucket: 'afframe-rental.firebasestorage.app',
     iosBundleId: 'com.example.aframeRentals',
+    databaseURL: 'https://afframe-rental-default-rtdb.firebaseio.com/',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
