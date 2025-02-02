@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "133494651804",
+    "project_id": "afframe-rental",
+    "storage_bucket": "afframe-rental.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:133494651804:android:72512c442cefefa4ebe659",
+        "android_client_info": {
+          "package_name": "com.example.aframe_rentals"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC--XKbE1lk_DuHz-ccqnHYHY7FRJuOWZc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
