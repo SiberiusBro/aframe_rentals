@@ -53,13 +53,11 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
       });
     }
   }
-
-  /// NEW: Let user pick location using Google Maps
+//Google maps care nu merge
   Future<void> _selectLocationOnMap() async {
     final lat = double.tryParse(_latitudeController.text) ?? 0.0;
     final lng = double.tryParse(_longitudeController.text) ?? 0.0;
 
-    // Navigate to our new Google Maps pick location screen
     final pickedLocation = await Navigator.push<LatLng?>(
       context,
       MaterialPageRoute(
@@ -69,8 +67,7 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
         ),
       ),
     );
-
-    // If user tapped "Save" and picked a location, update the text fields
+//Aici se poate hard coda
     if (pickedLocation != null) {
       setState(() {
         _latitudeController.text = '${pickedLocation.latitude}';
@@ -100,15 +97,14 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
           setState(() => _isLoading = false);
           return;
         }
-
-        // Upload image to Firebase Storage
+        //Imagini din firebase
         final String fileName =
             'cabins/${DateTime.now().millisecondsSinceEpoch}.jpg';
         final Reference ref = FirebaseStorage.instance.ref().child(fileName);
         await ref.putData(_selectedImageBytes!);
         final String imageUrl = await ref.getDownloadURL();
 
-        // Push data to Realtime Database
+        //Realtime Database
         final DatabaseReference dbRef =
         FirebaseDatabase.instance.ref("cabins").push();
 
@@ -238,8 +234,7 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
                   label: const Text('Use My Current Location'),
                 ),
                 const SizedBox(height: 8),
-
-                // NEW: Button to open Google Maps for picking a location
+                //Google Maps Care nu merge
                 ElevatedButton.icon(
                   onPressed: _selectLocationOnMap,
                   icon: const Icon(Icons.map),

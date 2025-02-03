@@ -32,9 +32,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSwatch(
           primarySwatch: Colors.indigo,
         ).copyWith(
-          secondary: Colors.amber, // accent color
+          secondary: Colors.amber,
         ),
-        // Example textTheme. Adjust font sizes and weights to your preference.
+
         textTheme: const TextTheme(
           titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           bodyLarge: TextStyle(fontSize: 16),

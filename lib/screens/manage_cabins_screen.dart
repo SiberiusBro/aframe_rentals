@@ -8,10 +8,10 @@ class ManageCabinsScreen extends StatefulWidget {
   const ManageCabinsScreen({super.key});
 
   @override
-  _ManageCabinsScreenState createState() => _ManageCabinsScreenState();
+  ManageCabinsScreenState createState() => ManageCabinsScreenState();
 }
 
-class _ManageCabinsScreenState extends State<ManageCabinsScreen> {
+class ManageCabinsScreenState extends State<ManageCabinsScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   final DatabaseReference dbRef = FirebaseDatabase.instance.ref("cabins");
 
@@ -29,7 +29,7 @@ class _ManageCabinsScreenState extends State<ManageCabinsScreen> {
             if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
               return const Center(
                 child: Text(
-                  'No cabins found.',
+                  'No AFrames Posted.',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               );

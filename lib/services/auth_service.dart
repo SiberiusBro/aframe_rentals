@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Sign in with email/password
   Future<User?> signInWithEmail(String email, String password) async {
     try {
       UserCredential result =
@@ -14,7 +13,6 @@ class AuthService {
     }
   }
 
-  // Sign up with email/password
   Future<User?> signUpWithEmail(String email, String password) async {
     try {
       UserCredential result =
@@ -25,7 +23,6 @@ class AuthService {
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
   }

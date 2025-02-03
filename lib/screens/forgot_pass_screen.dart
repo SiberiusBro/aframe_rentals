@@ -19,7 +19,6 @@ class ForgotPassScreenState extends State<ForgotPassScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Optional app bar
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

@@ -1,4 +1,3 @@
-// lib/models/cabin.dart
 class Cabin {
   final String title;
   final double price;

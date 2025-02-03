@@ -8,10 +8,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("cabins");
 
   @override
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
               return const Center(
                 child: Text(
-                  'No cabins added yet.\nGo to your profile to add one!',
+                  'No cabins added yet.\nStay tuned!',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                   textAlign: TextAlign.center,
                 ),
@@ -65,10 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      // Optional: navigate to a CabinDetailScreen
-                      // Navigator.push(context, MaterialPageRoute(
-                      //   builder: (context) => CabinDetailScreen(cabinData: cabinData),
-                      // ));
+                      //Aici functionalitati pentru Aframe Uri, cand o sa mearga
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

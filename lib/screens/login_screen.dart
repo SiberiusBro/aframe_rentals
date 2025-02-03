@@ -43,7 +43,6 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // App bar is optional here.
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -87,8 +86,6 @@ class LoginScreenState extends State<LoginScreen> {
                 _isLoading ? const CircularProgressIndicator() : const Text("Login"),
               ),
               const SizedBox(height: 16),
-
-              // Sign Up button
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/signup'),
                 child: const Text("Need an account? Sign Up"),
