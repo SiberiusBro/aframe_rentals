@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/background_container.dart';
 
 class ManageCabinsScreen extends StatefulWidget {
@@ -39,16 +40,22 @@ class _ManageCabinsScreenState extends State<ManageCabinsScreen> {
 
             return ListView(
               children: cabins.entries.map((entry) {
-                final Map cabinData = entry.value;
+                final cabinData = entry.value;
                 return Card(
                   margin: const EdgeInsets.all(12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: ListTile(
-                    leading: Image.network(
-                      cabinData['imageUrl'],
+                    leading: CachedNetworkImage(
+                      imageUrl: cabinData['imageUrl'],
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) =>
+                      const Icon(Icons.error),
                     ),
                     title: Text(cabinData['title']),
                     subtitle: Text("\$${cabinData['price']} per night"),
@@ -63,9 +70,10 @@ class _ManageCabinsScreenState extends State<ManageCabinsScreen> {
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () async {
-                            await dbRef.child(entry.key).remove();
+                            await dbRef.child(entry.key!).remove();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Cabin deleted successfully')),
+                              const SnackBar(
+                                  content: Text('Cabin deleted successfully')),
                             );
                           },
                         ),

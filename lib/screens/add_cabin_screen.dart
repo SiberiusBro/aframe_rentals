@@ -1,17 +1,19 @@
-import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'dart:typed_data';
+import 'pick_location_screen.dart';
 import '../widgets/background_container.dart';
 
 class AddCabinScreen extends StatefulWidget {
   const AddCabinScreen({super.key});
 
   @override
-  _AddCabinScreenState createState() => _AddCabinScreenState();
+  State<AddCabinScreen> createState() => _AddCabinScreenState();
 }
 
 class _AddCabinScreenState extends State<AddCabinScreen> {
@@ -20,26 +22,30 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _latitudeController = TextEditingController();
   final TextEditingController _longitudeController = TextEditingController();
+
   Uint8List? _selectedImageBytes;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
-  /// 🔹 Fetch the User's Current Location
   Future<void> _getCurrentLocation() async {
     try {
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
       setState(() {
         _latitudeController.text = position.latitude.toString();
         _longitudeController.text = position.longitude.toString();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error getting location: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error getting location: $e')),
+      );
     }
   }
 
-  /// 🔹 Pick an Image
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final XFile? image =
+    await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (image != null) {
       final Uint8List bytes = await image.readAsBytes();
       setState(() {
@@ -48,31 +54,64 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
     }
   }
 
-  /// 🔹 Submit the Cabin Data to Firebase
-  Future<void> _submit() async {
-    if (_formKey.currentState!.validate() && _selectedImageBytes != null) {
+  /// NEW: Let user pick location using Google Maps
+  Future<void> _selectLocationOnMap() async {
+    final lat = double.tryParse(_latitudeController.text) ?? 0.0;
+    final lng = double.tryParse(_longitudeController.text) ?? 0.0;
+
+    // Navigate to our new Google Maps pick location screen
+    final pickedLocation = await Navigator.push<LatLng?>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => PickLocationScreen(
+          initialLat: lat,
+          initialLng: lng,
+        ),
+      ),
+    );
+
+    // If user tapped "Save" and picked a location, update the text fields
+    if (pickedLocation != null) {
       setState(() {
-        _isLoading = true;
+        _latitudeController.text = '${pickedLocation.latitude}';
+        _longitudeController.text = '${pickedLocation.longitude}';
       });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      if (_selectedImageBytes == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select an image')),
+        );
+        return;
+      }
+      setState(() => _isLoading = true);
 
       try {
         final User? user = FirebaseAuth.instance.currentUser;
         if (user == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You need to be logged in to add a cabin.')),
+            const SnackBar(
+              content: Text('You need to be logged in to add a cabin.'),
+            ),
           );
-          setState(() {
-            _isLoading = false;
-          });
+          setState(() => _isLoading = false);
           return;
         }
 
-        final String fileName = 'cabins/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        // Upload image to Firebase Storage
+        final String fileName =
+            'cabins/${DateTime.now().millisecondsSinceEpoch}.jpg';
         final Reference ref = FirebaseStorage.instance.ref().child(fileName);
         await ref.putData(_selectedImageBytes!);
         final String imageUrl = await ref.getDownloadURL();
 
-        final DatabaseReference dbRef = FirebaseDatabase.instance.ref("cabins").push();
+        // Push data to Realtime Database
+        final DatabaseReference dbRef =
+        FirebaseDatabase.instance.ref("cabins").push();
+
         await dbRef.set({
           'id': dbRef.key,
           'title': _titleController.text.trim(),
@@ -90,19 +129,19 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
 
         await Future.delayed(const Duration(seconds: 1));
         Navigator.pop(context);
-
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error adding cabin: $error')),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields, select an image, and set a location')),
+        const SnackBar(
+          content: Text(
+              'Please fill in all fields, select an image, and set a location'),
+        ),
       );
     }
   }
@@ -120,47 +159,94 @@ class _AddCabinScreenState extends State<AddCabinScreen> {
               children: [
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Cabin Title', border: OutlineInputBorder()),
-                  validator: (value) => value == null || value.isEmpty ? 'Please enter a cabin title' : null,
+                  decoration: const InputDecoration(labelText: 'Cabin Title'),
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Please enter a cabin title'
+                      : null,
                 ),
                 const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _priceController,
-                  decoration: const InputDecoration(labelText: 'Price per Night', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Price per Night'),
                   keyboardType: TextInputType.number,
-                  validator: (value) => value == null || double.tryParse(value) == null ? 'Enter a valid price' : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter a valid price';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Price must be a number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
+
                 _selectedImageBytes == null
-                    ? const Text('No image selected')
-                    : Image.memory(_selectedImageBytes!, height: 200, width: double.infinity, fit: BoxFit.cover),
+                    ? const Text(
+                  'No image selected',
+                  style: TextStyle(color: Colors.white),
+                )
+                    : Image.memory(
+                  _selectedImageBytes!,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
                 const SizedBox(height: 16),
+
                 ElevatedButton.icon(
                   onPressed: _pickImage,
                   icon: const Icon(Icons.photo_library),
                   label: const Text('Select Image'),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _latitudeController,
-                  decoration: const InputDecoration(labelText: 'Latitude', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value == null || value.isEmpty ? 'Enter latitude' : null,
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _latitudeController,
+                        decoration: const InputDecoration(labelText: 'Latitude'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                        (value == null || value.isEmpty)
+                            ? 'Enter latitude'
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _longitudeController,
+                        decoration:
+                        const InputDecoration(labelText: 'Longitude'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                        (value == null || value.isEmpty)
+                            ? 'Enter longitude'
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _longitudeController,
-                  decoration: const InputDecoration(labelText: 'Longitude', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value == null || value.isEmpty ? 'Enter longitude' : null,
-                ),
-                const SizedBox(height: 16),
+
                 ElevatedButton.icon(
                   onPressed: _getCurrentLocation,
                   icon: const Icon(Icons.my_location),
                   label: const Text('Use My Current Location'),
                 ),
+                const SizedBox(height: 8),
+
+                // NEW: Button to open Google Maps for picking a location
+                ElevatedButton.icon(
+                  onPressed: _selectLocationOnMap,
+                  icon: const Icon(Icons.map),
+                  label: const Text('Select on Map'),
+                ),
                 const SizedBox(height: 24),
+
                 _isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(

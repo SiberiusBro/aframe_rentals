@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/background_container.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -56,35 +57,58 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return ListView(
               children: cabins.entries.map((entry) {
-                final Map cabinData = entry.value;
+                final cabinData = entry.value;
                 return Card(
                   margin: const EdgeInsets.all(12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                        child: Image.network(
-                          cabinData['imageUrl'],
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      // Optional: navigate to a CabinDetailScreen
+                      // Navigator.push(context, MaterialPageRoute(
+                      //   builder: (context) => CabinDetailScreen(cabinData: cabinData),
+                      // ));
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(16)),
+                          child: CachedNetworkImage(
+                            imageUrl: cabinData['imageUrl'],
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            errorWidget: (context, url, error) =>
+                            const Icon(Icons.error),
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Text(cabinData['title'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
-                        child: Text(
-                          '\$${cabinData['price']} per night',
-                          style: const TextStyle(fontSize: 16, color: Colors.grey),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text(
+                            cabinData['title'],
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                        Padding(
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                          child: Text(
+                            '\$${cabinData['price']} per night',
+                            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 );
               }).toList(),

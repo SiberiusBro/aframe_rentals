@@ -1,4 +1,3 @@
-// screens/forgot_pass_screen.dart
 import 'package:flutter/material.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
@@ -7,46 +6,44 @@ class ForgotPassScreen extends StatefulWidget {
   const ForgotPassScreen({super.key});
 
   @override
-  _ForgotPassScreenState createState() => _ForgotPassScreenState();
+  ForgotPassScreenState createState() => ForgotPassScreenState();
 }
 
-class _ForgotPassScreenState extends State<ForgotPassScreen> {
+class ForgotPassScreenState extends State<ForgotPassScreen> {
   final TextEditingController _emailController = TextEditingController();
+  final bool _isLoading = false;
 
-  // Add your Firebase password reset logic here
+  Future<void> _resetPassword() async {
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      // Optional app bar
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AuthHeader(
-                title: "Forgot Password",
-              ),
+              const AuthHeader(title: "Forgot Password"),
               const SizedBox(height: 32),
+
               AuthTextField(
                 hint: "Email",
                 icon: Icons.email_outlined,
                 controller: _emailController,
               ),
               const SizedBox(height: 24),
+
               ElevatedButton(
-                onPressed: () {
-                  // Example: FirebaseAuth.instance.sendPasswordResetEmail(email: _emailController.text.trim());
-                },
-                child: const Text("Send Reset Link"),
+                onPressed: _isLoading ? null : _resetPassword,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Send Reset Link"),
               ),
               const SizedBox(height: 16),
+
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),

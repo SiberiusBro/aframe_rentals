@@ -1,4 +1,3 @@
-// lib/widgets/background_container.dart
 import 'package:flutter/material.dart';
 
 class BackgroundContainer extends StatelessWidget {
