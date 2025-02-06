@@ -63,9 +63,8 @@ class HomeScreenState extends State<HomeScreen> {
             return ListView(
               children: cabins.entries.map((entry) {
                 final cabinData = entry.value;
-                // Add null safety checks:
-                final String imageUrl = (cabinData['imageUrl'] as String?) ??
-                    ''; // You can also put a default placeholder URL.
+                // Sa nu existe null pentru erori
+                final String imageUrl = (cabinData['imageUrl'] as String?) ?? '';
                 final String title =
                     (cabinData['title'] as String?) ?? 'No Title';
                 final double price = cabinData['price'] != null
@@ -79,7 +78,7 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      // Navigate to the cabin detail screen, passing cabinData.
+                      // Se executa navigarea catre pagina Cabanei
                       Navigator.push(
                         context,
                         MaterialPageRoute(

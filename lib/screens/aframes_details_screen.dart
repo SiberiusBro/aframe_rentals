@@ -7,7 +7,7 @@ class CabinDetailScreen extends StatelessWidget {
 
   const CabinDetailScreen({super.key, required this.cabinData});
 
-  // Opens Google Maps with directions to the cabin’s coordinates.
+  // Deschide Google Maps
   void _openNavigation(BuildContext context) async {
     final double latitude = cabinData['latitude'] is double
         ? cabinData['latitude']
@@ -29,16 +29,15 @@ class CabinDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Retrieve fields from cabinData.
+    // Se trag informatiile cu privire la Cabane
     final String title = cabinData['title'] ?? 'Cabin';
     final double price = cabinData['price'] is double
         ? cabinData['price']
         : double.tryParse(cabinData['price'].toString()) ?? 0.0;
     final String imageUrl = cabinData['imageUrl'] ?? '';
-    final String description = cabinData['description'] ??
-        'A beautiful cabin for rent. Enjoy the serenity and comfort with all modern amenities.';
+    final String description = cabinData['description'] ?? '';
 
-    // Extra facilities: expect cabinData['extras'] to be a List of maps.
+    // Extra Facilitati
     final List<dynamic> extras = cabinData['extras'] is List
         ? cabinData['extras'] as List<dynamic>
         : [];
@@ -104,7 +103,7 @@ class CabinDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // For each extra facility, display its name and extra price.
+                      // Pentru fiecare facilitate in plus se pune numele acesteia si pretul
                       ...extras.map((facility) {
                         final String facilityName =
                             facility['name']?.toString() ?? 'Facility';
@@ -129,7 +128,7 @@ class CabinDetailScreen extends StatelessWidget {
                     ],
                   ),
                 const SizedBox(height: 20),
-                // "Take me there" button
+                // Butonul take me there de navigatie
                 Center(
                   child: ElevatedButton.icon(
                     onPressed: () => _openNavigation(context),

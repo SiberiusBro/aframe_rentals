@@ -44,7 +44,7 @@ class ManageCabinsScreenState extends State<ManageCabinsScreen> {
               children: cabins.entries.map((entry) {
                 final Map cabinData = entry.value;
 
-                // Add null safety checks
+                // Sa nu existe nimic null pentru erori
                 final String imageUrl =
                     (cabinData['imageUrl'] as String?) ?? '';
                 final String title =
@@ -79,7 +79,7 @@ class ManageCabinsScreenState extends State<ManageCabinsScreen> {
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () {
-                            // Implement edit functionality here.
+                            // De editat
                           },
                         ),
                         IconButton(

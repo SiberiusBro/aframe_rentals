@@ -172,7 +172,7 @@ class AddCabinScreenState extends State<AddCabinScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Cabin Title
+                // Titlul cabanei
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: 'Cabin Title'),
@@ -181,7 +181,7 @@ class AddCabinScreenState extends State<AddCabinScreen> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                // Price per Night
+                // Pret / noapte
                 TextFormField(
                   controller: _priceController,
                   decoration: const InputDecoration(labelText: 'Price per Night'),
@@ -193,7 +193,6 @@ class AddCabinScreenState extends State<AddCabinScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Description Field
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(labelText: 'Description'),
@@ -203,13 +202,12 @@ class AddCabinScreenState extends State<AddCabinScreen> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                // Section: Multiple Photos
+                // Mai multe poze pot fi selectate
                 const Text(
                   'Photos',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                // Display selected images in a horizontal list
                 SizedBox(
                   height: 100,
                   child: ListView.builder(
@@ -234,13 +232,12 @@ class AddCabinScreenState extends State<AddCabinScreen> {
                   label: const Text('Add Photo'),
                 ),
                 const SizedBox(height: 16),
-                // Section: Extra Facilities
                 const Text(
                   'Extra Facilities',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                // List of added extra facilities
+                // Lista cu extra facilitati
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -305,14 +302,12 @@ class AddCabinScreenState extends State<AddCabinScreen> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                // Button: Use My Current Location
                 ElevatedButton.icon(
                   onPressed: _getCurrentLocation,
                   icon: const Icon(Icons.my_location),
                   label: const Text('Use My Current Location'),
                 ),
                 const SizedBox(height: 24),
-                // Submit Button
                 _isLoading
                     ? const Center(child: SpinKitFadingCube(color: Colors.indigo,size: 50.0,))
                     : ElevatedButton(
