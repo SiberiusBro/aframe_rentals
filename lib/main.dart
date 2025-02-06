@@ -1,13 +1,11 @@
-import 'package:aframe_rentals/screens/add_cabin_screen.dart';
+import 'package:aframe_rentals/screens/add_aframes_screen.dart';
 import 'package:aframe_rentals/screens/forgot_pass_screen.dart';
 import 'package:aframe_rentals/screens/login_screen.dart';
-import 'package:aframe_rentals/screens/manage_cabins_screen.dart';
+import 'package:aframe_rentals/screens/manage_aframes_screen.dart';
 import 'package:aframe_rentals/screens/profile_screen.dart';
 import 'package:aframe_rentals/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:google_maps_flutter_web/google_maps_flutter_web.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 
@@ -28,13 +26,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'A-Frame Rentals',
       theme: ThemeData(
+        fontFamily: 'Inter',
         primarySwatch: Colors.indigo,
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.indigo,
-        ).copyWith(
-          secondary: Colors.amber,
-        ),
-
         textTheme: const TextTheme(
           titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           bodyLarge: TextStyle(fontSize: 16),

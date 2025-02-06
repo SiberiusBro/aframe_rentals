@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../widgets/background_container.dart';
 
 class ManageCabinsScreen extends StatefulWidget {
@@ -24,56 +24,72 @@ class ManageCabinsScreenState extends State<ManageCabinsScreen> {
           stream: dbRef.orderByChild("userId").equalTo(user?.uid).onValue,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: SpinKitFadingCube(color: Colors.indigo,size: 50.0,));
             }
-            if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+            if (!snapshot.hasData ||
+                snapshot.data?.snapshot.value == null ||
+                (snapshot.data!.snapshot.value as Map).isEmpty) {
               return const Center(
                 child: Text(
-                  'No AFrames Posted.',
+                  'No cabins found.',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               );
             }
 
             final Map<dynamic, dynamic> cabins =
-            (snapshot.data!.snapshot.value as Map<dynamic, dynamic>);
+            snapshot.data!.snapshot.value as Map<dynamic, dynamic>;
 
             return ListView(
               children: cabins.entries.map((entry) {
-                final cabinData = entry.value;
+                final Map cabinData = entry.value;
+
+                // Add null safety checks
+                final String imageUrl =
+                    (cabinData['imageUrl'] as String?) ?? '';
+                final String title =
+                    (cabinData['title'] as String?) ?? 'No Title';
+                final double price = cabinData['price'] != null
+                    ? double.tryParse(cabinData['price'].toString()) ?? 0.0
+                    : 0.0;
+
                 return Card(
                   margin: const EdgeInsets.all(12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                      borderRadius: BorderRadius.circular(16)),
                   child: ListTile(
-                    leading: CachedNetworkImage(
-                      imageUrl: cabinData['imageUrl'],
+                    leading: imageUrl.isNotEmpty
+                        ? Image.network(
+                      imageUrl,
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                      const CircularProgressIndicator(),
-                      errorWidget: (context, url, error) =>
-                      const Icon(Icons.error),
+                    )
+                        : Container(
+                      width: 50,
+                      height: 50,
+                      color: Colors.grey,
+                      child: const Icon(Icons.image, color: Colors.white),
                     ),
-                    title: Text(cabinData['title']),
-                    subtitle: Text("\$${cabinData['price']} per night"),
+                    title: Text(title),
+                    subtitle: Text("\$$price per night"),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () {
+                            // Implement edit functionality here.
                           },
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () async {
-                            await dbRef.child(entry.key!).remove();
+                            await dbRef.child(entry.key).remove();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Cabin deleted successfully')),
+                                  content:
+                                  Text('Cabin deleted successfully')),
                             );
                           },
                         ),

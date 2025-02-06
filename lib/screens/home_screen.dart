@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../widgets/background_container.dart';
+import 'aframes_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +19,8 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    String nickname = user?.displayName ?? (user?.email?.split('@')[0] ?? 'User');
+    String nickname =
+        user?.displayName ?? (user?.email?.split('@')[0] ?? 'User');
 
     return Scaffold(
       appBar: AppBar(
@@ -40,9 +43,11 @@ class HomeScreenState extends State<HomeScreen> {
           stream: _dbRef.onValue,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: SpinKitFadingCube(color: Colors.indigo,size: 50.0,));
             }
-            if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+            if (!snapshot.hasData ||
+                snapshot.data?.snapshot.value == null ||
+                (snapshot.data!.snapshot.value as Map).isEmpty) {
               return const Center(
                 child: Text(
                   'No cabins added yet.\nStay tuned!',
@@ -58,6 +63,15 @@ class HomeScreenState extends State<HomeScreen> {
             return ListView(
               children: cabins.entries.map((entry) {
                 final cabinData = entry.value;
+                // Add null safety checks:
+                final String imageUrl = (cabinData['imageUrl'] as String?) ??
+                    ''; // You can also put a default placeholder URL.
+                final String title =
+                    (cabinData['title'] as String?) ?? 'No Title';
+                final double price = cabinData['price'] != null
+                    ? double.tryParse(cabinData['price'].toString()) ?? 0.0
+                    : 0.0;
+
                 return Card(
                   margin: const EdgeInsets.all(12),
                   shape: RoundedRectangleBorder(
@@ -65,30 +79,50 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      //Aici functionalitati pentru Aframe Uri, cand o sa mearga
+                      // Navigate to the cabin detail screen, passing cabinData.
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CabinDetailScreen(cabinData: cabinData),
+                        ),
+                      );
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
-                          borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                          child: CachedNetworkImage(
-                            imageUrl: cabinData['imageUrl'],
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          child: imageUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                            imageUrl: imageUrl,
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(
-                              child: CircularProgressIndicator(),
+                            placeholder: (context, url) =>
+                            const Center(
+                              child: SpinKitFadingCube(color: Colors.indigo,size: 50.0,),
                             ),
                             errorWidget: (context, url, error) =>
                             const Icon(Icons.error),
+                          )
+                              : Container(
+                            height: 200,
+                            width: double.infinity,
+                            color: Colors.grey,
+                            child: const Center(
+                              child: Text(
+                                'No Image',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Text(
-                            cabinData['title'],
+                            title,
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -96,11 +130,12 @@ class HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Padding(
-                          padding:
-                          const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 4),
                           child: Text(
-                            '\$${cabinData['price']} per night',
-                            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                            '\$$price per night',
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.grey),
                           ),
                         ),
                         const SizedBox(height: 12),

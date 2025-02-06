@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../widgets/background_container.dart';
 import '../services/auth_service.dart';
 
@@ -97,7 +98,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton(
                 onPressed: _isSaving ? null : _updateNickname,
                 child: _isSaving
-                    ? const CircularProgressIndicator()
+                    ? const SpinKitFadingCube(color: Colors.indigo,size: 50.0,)
                     : const Text('Update Nickname'),
               ),
               const SizedBox(height: 20),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
 
@@ -83,7 +84,7 @@ class LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : () => _login(context),
                 child:
-                _isLoading ? const CircularProgressIndicator() : const Text("Login"),
+                _isLoading ? const SpinKitFadingCube(color: Colors.indigo,size: 50.0,) : const Text("Login"),
               ),
               const SizedBox(height: 16),
               TextButton(

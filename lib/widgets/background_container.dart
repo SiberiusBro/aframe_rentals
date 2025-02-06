@@ -8,6 +8,8 @@ class BackgroundContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Force the container to fill the available space.
+      constraints: const BoxConstraints.expand(),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.indigo, Colors.blueAccent],

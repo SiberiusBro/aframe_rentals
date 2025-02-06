@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
 
@@ -90,7 +91,7 @@ class SignupScreenState extends State<SignupScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _signUp,
                 child: _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const SpinKitFadingCube(color: Colors.indigo,size: 50.0,)
                     : const Text("Sign Up"),
               ),
               const SizedBox(height: 16),

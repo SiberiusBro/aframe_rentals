@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
 
@@ -38,7 +39,7 @@ class ForgotPassScreenState extends State<ForgotPassScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _resetPassword,
                 child: _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const SpinKitFadingCube(color: Colors.indigo,size: 50.0,)
                     : const Text("Send Reset Link"),
               ),
               const SizedBox(height: 16),
