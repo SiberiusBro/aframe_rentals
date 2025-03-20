@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "133494651804",
+    "firebase_url": "https://afframe-rental-default-rtdb.firebaseio.com",
     "project_id": "afframe-rental",
     "storage_bucket": "afframe-rental.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.aframe_rentals"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "133494651804-56u9to2vuuki5gn6t0bk0bmd67jjli1f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.aframe_rentals",
+            "certificate_hash": "2d60c1f77945d13a5aad17609407e89cfc3b9b70"
+          }
+        },
+        {
+          "client_id": "133494651804-7g131k0t9pf459kfstlvkk3f2an6tuhd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC--XKbE1lk_DuHz-ccqnHYHY7FRJuOWZc"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "133494651804-7g131k0t9pf459kfstlvkk3f2an6tuhd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "133494651804-5ootelsfr57k8rgqootmot6479e82n9k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.aframeRentals"
+              }
+            }
+          ]
         }
       }
     }

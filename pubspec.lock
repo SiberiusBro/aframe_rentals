@@ -9,6 +9,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.50"
+  another_carousel_pro:
+    dependency: "direct main"
+    description:
+      name: another_carousel_pro
+      sha256: "3973eac89f0df07c9032f597dc8f8e48ad3d73065c62cefd46231de04a71d433"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
+  args:
+    dependency: transitive
+    description:
+      name: args
+      sha256: bf9f5caeea8d8fe6721a9c358dd8a5c1947b27f1cfaa18b39c301273594919e6
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.0"
   async:
     dependency: transitive
     description:
@@ -57,6 +73,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  chalkdart:
+    dependency: transitive
+    description:
+      name: chalkdart
+      sha256: e7cfcc9a9d9546843304c1ff87fe0696c7eb82ee70e6df63f555f321b15a40d8
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.3"
   characters:
     dependency: transitive
     description:
@@ -137,6 +161,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  custom_info_window:
+    dependency: "direct main"
+    description:
+      name: custom_info_window
+      sha256: b7fce9017cb4b8a4319fa7f8080e4fdabfc65996df61c65cd2079dbaf93f56f5
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   dart_earcut:
     dependency: transitive
     description:
@@ -384,6 +416,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  font_awesome_flutter:
+    dependency: "direct main"
+    description:
+      name: font_awesome_flutter
+      sha256: d3a89184101baec7f4600d58840a764d2ef760fe1c5a20ef9e6b0e9b24a07a3a
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.8.0"
   geolocator:
     dependency: "direct main"
     description:
@@ -440,6 +480,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.6.6"
+  glob:
+    dependency: transitive
+    description:
+      name: glob
+      sha256: c3f1ee72c96f8f78935e18aa8cecced9ab132419e8625dc187e1c2408efc20de
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.3"
+  google_identity_services_web:
+    dependency: transitive
+    description:
+      name: google_identity_services_web
+      sha256: "55580f436822d64c8ff9a77e37d61f5fb1e6c7ec9d632a43ee324e2a05c3c6c9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.3"
   google_maps:
     dependency: transitive
     description:
@@ -488,6 +544,46 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.10"
+  google_sign_in:
+    dependency: "direct main"
+    description:
+      name: google_sign_in
+      sha256: d0a2c3bcb06e607bb11e4daca48bd4b6120f0bbc4015ccebbe757d24ea60ed2a
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.0"
+  google_sign_in_android:
+    dependency: transitive
+    description:
+      name: google_sign_in_android
+      sha256: "4e52c64366bdb3fe758f683b088ee514cc7a95e69c52b5ee9fc5919e1683d21b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.2.0"
+  google_sign_in_ios:
+    dependency: transitive
+    description:
+      name: google_sign_in_ios
+      sha256: "29cd125f58f50ceb40e8253d3c0209e321eee3e5df16cd6d262495f7cad6a2bd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.8.1"
+  google_sign_in_platform_interface:
+    dependency: transitive
+    description:
+      name: google_sign_in_platform_interface
+      sha256: "5f6f79cf139c197261adb6ac024577518ae48fdff8e53205c5373b5f6430a8aa"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.0"
+  google_sign_in_web:
+    dependency: transitive
+    description:
+      name: google_sign_in_web
+      sha256: "460547beb4962b7623ac0fb8122d6b8268c951cf0b646dd150d60498430e4ded"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.4+4"
   html:
     dependency: transitive
     description:
@@ -664,6 +760,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
+  material_symbols_icons:
+    dependency: "direct main"
+    description:
+      name: material_symbols_icons
+      sha256: ca30ccbd97763353bde6bb1076aa4f4d17a40db0804384da77df142102aa225d
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2808.0"
   meta:
     dependency: transitive
     description:
@@ -688,6 +792,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  nested:
+    dependency: transitive
+    description:
+      name: nested
+      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   octo_image:
     dependency: transitive
     description:
@@ -784,6 +896,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  provider:
+    dependency: "direct main"
+    description:
+      name: provider
+      sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.2"
   rxdart:
     dependency: transitive
     description:
@@ -1046,5 +1166,5 @@ packages:
     source: hosted
     version: "1.1.0"
 sdks:
-  dart: ">=3.6.1 <4.0.0"
+  dart: ">=3.6.0 <4.0.0"
   flutter: ">=3.27.0"
