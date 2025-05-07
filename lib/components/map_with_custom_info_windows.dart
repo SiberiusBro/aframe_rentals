@@ -236,7 +236,7 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                       height: size.height * 0.77,
                       child: GoogleMap(
                         initialCameraPosition:
-                        CameraPosition(target: myCurrentLocation),
+                        CameraPosition(target: myCurrentLocation, zoom: 14),
                         onMapCreated: (GoogleMapController controller) {
                           googleMapController = controller;
                           _customInfoWindowController.googleMapController =

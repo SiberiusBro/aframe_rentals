@@ -5,19 +5,17 @@ import 'package:aframe_rentals/screens/forgot_pass_screen.dart';
 import 'package:aframe_rentals/screens/login_screen.dart';
 import 'package:aframe_rentals/screens/manage_aframes_screen.dart';
 import 'package:aframe_rentals/screens/signup_screen.dart';
+import 'package:aframe_rentals/services/the_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // This ensures Firebase creates an app with the name "dev project"
-  await Firebase.initializeApp(
-    name: "dev project",
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -26,9 +24,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => TheProvider(),
+        )
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home:LoginScreen(),
+        // keep user login until logout
+
+        // StreamBuilder(
+        //   stream: FirebaseAuth.instance.authStateChanges(),
+        //   builder: (context, snapshot) {
+        //     if (snapshot.hasData) {
+        //       return const HomeScreen();
+        //     } else {
+        //       return const LoginScreen();
+        //     }
+        //   },
+        // ),
+      ),
     );
   }
 }

@@ -81,7 +81,7 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         const Text.rich(
                           TextSpan(
-                            text: "Airbnb your place\n",
+                            text: "Stay Finder!\n",
                             style: TextStyle(
                               height: 2.5,
                               fontSize: 18,
@@ -91,7 +91,7 @@ class ProfilePage extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text:
-                                "It's simple to get set up and \nstart earning.",
+                                "Having a rental place? \nPublish it here!.",
                                 style: TextStyle(
                                   height: 1.2,
                                   fontSize: 14,

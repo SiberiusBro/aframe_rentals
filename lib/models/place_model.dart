@@ -93,7 +93,7 @@ final List<Place> listOfPlace = [
     imageUrls: [
       "https://www.momondo.in/himg/b1/a8/e3/revato-1172876-6930557-765128.jpg",
       "https://media.timeout.com/images/105162711/image.jpg",
-      "https://www.telegraph.co.uk/content/dam/Travel/hotels/2023/september/one-and-only-cape-town-product-image.jpg",
+      "https://www.thespruce.com/thmb/Yaz6mR23IBvAPvkviKYi1N6clLU=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/PAinteriors-7-cafe9c2bd6be4823b9345e591e4f367f.jpg",
       "https://www.theindiahotel.com/extra-images/banner-01.jpg",
     ],
   ),
@@ -101,7 +101,7 @@ final List<Place> listOfPlace = [
     isActive: false,
     title: "Cosy room in fabulous condo!",
     image:
-    "https://www.telegraph.co.uk/content/dam/Travel/hotels/2023/september/one-and-only-cape-town-product-image.jpg",
+    "https://www.thespruce.com/thmb/Yaz6mR23IBvAPvkviKYi1N6clLU=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/PAinteriors-7-cafe9c2bd6be4823b9345e591e4f367f.jpg",
     rating: 4.55,
     date: "Oct 01-06",
     review: 26,
@@ -116,7 +116,7 @@ final List<Place> listOfPlace = [
     latitude: -33.922,
     longitude: 18.4231,
     imageUrls: [
-      "https://www.telegraph.co.uk/content/dam/Travel/hotels/2023/september/one-and-only-cape-town-product-image.jpg",
+      "https://www.thespruce.com/thmb/Yaz6mR23IBvAPvkviKYi1N6clLU=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/PAinteriors-7-cafe9c2bd6be4823b9345e591e4f367f.jpg",
       "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0e/de/f7/c3/standard-room.jpg?w=1200&h=-1&s=1",
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTuMkI1MoQDzLBF-prjIp6kyXpccVol16bsew&s"
     ],

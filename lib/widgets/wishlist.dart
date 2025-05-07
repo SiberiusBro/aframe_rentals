@@ -60,7 +60,7 @@ class Wishlists extends StatelessWidget {
                         String favorite = favoriteItems[index];
                         return FutureBuilder(
                             future: FirebaseFirestore.instance
-                                .collection("myAppCpollection")
+                                .collection("myAppCollection")
                                 .doc(favorite)
                                 .get(),
                             builder: (context, snapShot) {

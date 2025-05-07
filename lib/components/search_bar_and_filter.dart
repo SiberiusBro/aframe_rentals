@@ -35,7 +35,8 @@ class SearchBarAndFilter extends StatelessWidget {
                       size: 32,
                     ),
                     SizedBox(width: 8),
-                    Column(
+                    Flexible(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -47,7 +48,6 @@ class SearchBarAndFilter extends StatelessWidget {
                         ),
                         SizedBox(
                           height: 20,
-                          width: 240,
                           child: TextField(
                             decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -64,6 +64,7 @@ class SearchBarAndFilter extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
                     ),
                   ],
                 ),

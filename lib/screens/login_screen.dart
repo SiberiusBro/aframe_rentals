@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: Colors.lightBlueAccent,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: SafeArea(
           bottom: false,
@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     RichText(
                       text: const TextSpan(
                         text:
-                        "We'll call or text you to conform your number. Standard message and data rates apply.  ",
+                        "Lorem Ipsum Dolores\n",
                         style: TextStyle(
                           fontSize: 15,
                           color: Colors.black,
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: Colors.pink,
+                        color: Colors.lightBlue,
                       ),
                       child: const Center(
                         child: Text(
@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         size,
                         FontAwesomeIcons.google,
                         "Continue with Google",
-                        Colors.pink,
+                        Colors.lightBlue,
                         27,
                       ),
                     ),
