@@ -1,9 +1,10 @@
 
-import 'package:aframe_rentals/screens/home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../services/auth_service.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -33,9 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const Divider(
-                color: Colors.black12,
-              ),
+              const Divider(color: Colors.black12),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -48,16 +50,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(
-                      height: size.height * 0.02,
+                    SizedBox(height: size.height * 0.02),
+                    TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        labelText: "Email",
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                    // for phone number field,
-                    phoneNumberField(size),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.02),
                     RichText(
                       text: const TextSpan(
-                        text:
-                        "Lorem Ipsum Dolores\n",
+                        text: "By continuing, you agree to our\n",
                         style: TextStyle(
                           fontSize: 15,
                           color: Colors.black,
@@ -74,61 +87,100 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     SizedBox(height: size.height * 0.03),
-                    Container(
-                      width: size.width,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.lightBlue,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Continue",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    GestureDetector(
+                      onTap: () async {
+                        String email = emailController.text.trim();
+                        String password = passwordController.text.trim();
+
+                        if (email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Please enter email and password")),
+                          );
+                          return;
+                        }
+
+                        User? user = await FirebaseAuthServices()
+                            .signInWithEmailAndPassword(email, password);
+
+                        if (user != null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomeScreen(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Login failed. Check credentials.")),
+                          );
+                        }
+                      },
+
+                      child: Container(
+                        width: size.width,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.lightBlue,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Continue",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: size.height * 0.026),
+                    TextButton(
+                      onPressed: () async {
+                        String email = emailController.text.trim();
+                        String password = passwordController.text.trim();
+
+                        if (email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Please enter email and password")),
+                          );
+                          return;
+                        }
+
+                        User? user = await FirebaseAuthServices()
+                            .signUpWithEmailAndPassword(email, password);
+
+                        if (user != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Check your email to verify your account.")),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Sign up failed.")),
+                          );
+                        }
+                      },
+                      child: const Text(
+                        "Don't have an account? Sign up",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.03),
                     Row(
                       children: [
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: Colors.black26,
-                          ),
-                        ),
+                        Expanded(child: Divider(color: Colors.black26)),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Text(
-                            "or",
-                            style: TextStyle(fontSize: 18),
-                          ),
+                          child: Text("or", style: TextStyle(fontSize: 18)),
                         ),
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: Colors.black26,
-                          ),
-                        ),
+                        Expanded(child: Divider(color: Colors.black26)),
                       ],
                     ),
                     SizedBox(height: size.height * 0.015),
-                    socialIcons(
-                      size,
-                      Icons.facebook,
-                      "Continue with Facebook",
-                      Colors.blue,
-                      30,
-                    ),
-                    // now let's do the google authentication parts
-// add the sha1 and sha265 key
-// after you have enable google and  Email/Password sign in,
-// you need to re download the google services file in both the android and ios device and replace the old file to new file ,
-                    // after this all android setup is completed but you need to add some line for iso
                     InkWell(
                       onTap: () async {
                         await FirebaseAuthServices().signInWithGoogle();
@@ -146,20 +198,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         Colors.lightBlue,
                         27,
                       ),
-                    ),
-                    socialIcons(
-                      size,
-                      Icons.apple,
-                      "Continue with Apple",
-                      Colors.black,
-                      30,
-                    ),
-                    socialIcons(
-                      size,
-                      Icons.email_outlined,
-                      "Continue with email",
-                      Colors.black,
-                      30,
                     ),
                     const SizedBox(height: 10),
                     const Center(
@@ -194,11 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Row(
           children: [
             SizedBox(width: size.width * 0.05),
-            Icon(
-              icon,
-              color: color,
-              size: iconSize,
-            ),
+            Icon(icon, color: color, size: iconSize),
             SizedBox(width: size.width * 0.18),
             Text(
               name,
@@ -210,72 +244,6 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(width: 10),
           ],
         ),
-      ),
-    );
-  }
-
-  Container phoneNumberField(Size size) {
-    return Container(
-      width: size.width,
-      height: 130,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black45,
-        ),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: 10,
-              left: 10,
-              top: 8,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Country/Regin",
-                  style: TextStyle(
-                    color: Colors.black45,
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Ro(+40)",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                      ),
-                    ),
-                    Icon(
-                      Icons.keyboard_arrow_down_sharp,
-                      size: 30,
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ),
-          Divider(),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Phone number",
-                hintStyle: TextStyle(
-                  fontSize: 18,
-                  color: Colors.black45,
-                ),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

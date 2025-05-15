@@ -4,7 +4,8 @@ import 'package:aframe_rentals/components/display_place.dart';
 import 'package:aframe_rentals/components/display_total_price.dart';
 import 'package:aframe_rentals/components/map_with_custom_info_windows.dart';
 import 'package:aframe_rentals/components/search_bar_and_filter.dart';
-
+import 'package:aframe_rentals/models/place_model.dart';
+import 'package:aframe_rentals/models/category.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -14,132 +15,132 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  // collection for category
-  final CollectionReference categoryCollection =
-  FirebaseFirestore.instance.collection("AppCategory");
+  List<Category> categories = [];
+  String? selectedCategoryId;
+  List<Place> allPlaces = [];
 
-  int selectedIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    fetchCategories();
+  }
+
+  Future<void> fetchCategories() async {
+    final snapshot = await FirebaseFirestore.instance.collection('categories').get();
+    final loaded = snapshot.docs.map((doc) {
+      return Category.fromFirestore(doc.id, doc.data());
+    }).toList();
+
+    setState(() {
+      categories = [
+        Category(id: 'all', title: 'All', image: 'https://cdn-icons-png.flaticon.com/512/709/709496.png'),
+        ...loaded
+      ];
+      selectedCategoryId = 'all';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            // for search bar and filter button
             const SearchBarAndFilter(),
-            // let's fetch list of category items from firebase.
-            listOfCategoryItems(size),
-            const Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // for switch button
-                    DisplayTotalPrice(),
-                    SizedBox(height: 15),
-                    // displat the place items
-                    DisplayPlace(),
+            categorySelector(size),
+            const DisplayTotalPrice(),
+            const SizedBox(height: 10),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('places')
+                    .where('isActive', isEqualTo: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                  ],
-                ),
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text("No places available."));
+                  }
+
+                  final all = snapshot.data!.docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return Place.fromJson(data);
+                  }).toList();
+
+                  final filtered = selectedCategoryId == 'all'
+                      ? all
+                      : all.where((p) => p.categoryId == selectedCategoryId).toList();
+
+                  return ListView.builder(
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      return DisplayPlace(place: filtered[index]);
+                    },
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
-      // for google map
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: const MapWithCustomInfoWindows(),
+      floatingActionButton: const MapWithCustomInfoWindows(), // map only
     );
   }
 
-  StreamBuilder<QuerySnapshot<Object?>> listOfCategoryItems(Size size) {
-    return StreamBuilder(
-      stream: categoryCollection.snapshots(),
-      builder: (context, streamSnapshot) {
-        if (streamSnapshot.hasData) {
-          return Stack(
-            children: [
-              const Positioned(
-                left: 0,
-                right: 0,
-                top: 80,
-                child: Divider(
-                  color: Colors.black12,
-                ),
+  Widget categorySelector(Size size) {
+    return SizedBox(
+      height: size.height * 0.12,
+      child: categories.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final cat = categories[index];
+          final isSelected = selectedCategoryId == cat.id;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() => selectedCategoryId = cat.id);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  Image.network(
+                    cat.image,
+                    height: 32,
+                    width: 32,
+                    color: isSelected ? Colors.black : Colors.black45,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    cat.title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isSelected ? Colors.black : Colors.black45,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 2,
+                    width: 40,
+                    color: isSelected ? Colors.black : Colors.transparent,
+                  )
+                ],
               ),
-              SizedBox(
-                height: size.height * 0.12,
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: streamSnapshot.data!.docs.length,
-                  physics: const BouncingScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedIndex = index;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.only(
-                          top: 20,
-                          right: 20,
-                          left: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              height: 32,
-                              width: 40,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                              ),
-                              child: Image.network(
-                                streamSnapshot.data!.docs[index]['image'],
-                                color: selectedIndex == index
-                                    ? Colors.black
-                                    : Colors.black45,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              streamSnapshot.data!.docs[index]['title'],
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: selectedIndex == index
-                                    ? Colors.black
-                                    : Colors.black45,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Container(
-                              height: 3,
-                              width: 50,
-                              color: selectedIndex == index
-                                  ? Colors.black
-                                  : Colors.transparent,
-                            )
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+            ),
           );
-        }
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
+        },
+      ),
     );
   }
 }

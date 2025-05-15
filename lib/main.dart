@@ -1,17 +1,15 @@
 import 'package:aframe_rentals/models/category.dart';
 import 'package:aframe_rentals/models/place_model.dart';
-import 'package:aframe_rentals/screens/add_aframes_screen.dart';
-import 'package:aframe_rentals/screens/forgot_pass_screen.dart';
+import 'package:aframe_rentals/screens/account_details_screen.dart';
 import 'package:aframe_rentals/screens/login_screen.dart';
-import 'package:aframe_rentals/screens/manage_aframes_screen.dart';
-import 'package:aframe_rentals/screens/signup_screen.dart';
 import 'package:aframe_rentals/services/the_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/home_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:aframe_rentals/screens/user_profile_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +30,12 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home:LoginScreen(),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => LoginScreen(),
+          '/account-details': (context) => const AccountDetailsScreen(),
+          '/edit-profile': (context) => const UserProfileScreen(), // ✅ Add this line
+        },
         // keep user login until logout
 
         // StreamBuilder(
