@@ -72,6 +72,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
                   final all = snapshot.data!.docs.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
+                    data['id'] = doc.id;
                     return Place.fromJson(data);
                   }).toList();
 

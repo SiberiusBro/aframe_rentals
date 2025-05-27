@@ -114,6 +114,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       final userId = FirebaseAuth.instance.currentUser?.uid;
 
       await FirebaseFirestore.instance.collection('places').doc(docId).set({
+        'id': docId,
         'title': titleController.text,
         'price': int.parse(priceController.text),
         'currency': currency,

@@ -76,6 +76,7 @@ class Place {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       'categoryId': categoryId,
       'isActive': isActive,
