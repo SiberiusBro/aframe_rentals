@@ -1,163 +1,94 @@
-import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-
-import '../services/user_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key});
+  final String userId;
+  const UserProfileScreen({super.key, required this.userId});
 
   @override
   State<UserProfileScreen> createState() => _UserProfileScreenState();
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
-  // ────────────────────────────────── controllers & state
-  final nameController = TextEditingController();
-  final ageController  = TextEditingController();
-  String gender        = 'Male';
-
-  File?   _selectedImage;
-  String? photoUrl;
-  bool    isLoading = true;
-
-  // ────────────────────────────────── pick image
-  Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _selectedImage = File(picked.path));
-    }
-  }
-
-  // ────────────────────────────────── load profile data
-  Future<void> loadProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final profile = await UserService().getUserProfile();
-
-    setState(() {
-      nameController.text = profile?['name']   ?? user.displayName ?? '';
-      ageController.text  = profile?['age']?.toString() ?? '';
-      gender              = profile?['gender'] ?? 'Male';
-      photoUrl            = profile?['photoUrl'] ?? user.photoURL;
-      isLoading           = false;
-    });
-  }
+  Map<String, dynamic>? _userProfile;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    loadProfile();
+    _fetchUserProfile();
   }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    ageController.dispose();
-    super.dispose();
+  Future<void> _fetchUserProfile() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+      if (doc.exists) {
+        _userProfile = doc.data();
+      }
+    } catch (e) {
+      // Handle error (e.g., no permission or network issue)
+      _userProfile = null;
+    }
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
-  // ────────────────────────────────── helper for avatar image
-  ImageProvider _avatarImage() {
-    if (_selectedImage != null) return FileImage(_selectedImage!);
-    if (photoUrl != null && photoUrl!.isNotEmpty) return NetworkImage(photoUrl!);
-    return const AssetImage('assets/images/default_avatar.png');
-  }
-
-  // ────────────────────────────────── UI
   @override
   Widget build(BuildContext context) {
+    final profile = _userProfile;
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
-      body: isLoading
+      appBar: AppBar(title: const Text("User Profile")),
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            // avatar
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _avatarImage(),
-              ),
+          : (profile == null
+          ? const Center(child: Text("User not found."))
+          : ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          const SizedBox(height: 30),
+          Center(
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.black26,
+              backgroundImage: (profile['photoUrl'] != null && (profile['photoUrl'] as String).isNotEmpty)
+                  ? NetworkImage(profile['photoUrl'])
+                  : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
             ),
-            const SizedBox(height: 10),
-            const Text(
-              'Tap to change profile picture',
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: Text(
+              profile['name'] ?? 'No name provided',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-
-            // name
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 10),
-
-            // age
-            TextField(
-              controller: ageController,
-              decoration: const InputDecoration(labelText: 'Age'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 10),
-
-            // gender
-            DropdownButtonFormField<String>(
-              value: gender,
-              decoration: const InputDecoration(labelText: 'Gender'),
-              items: const [
-                DropdownMenuItem(value: 'Male',   child: Text('Male')),
-                DropdownMenuItem(value: 'Female', child: Text('Female')),
-                DropdownMenuItem(value: 'Other',  child: Text('Other')),
-              ],
-              onChanged: (value) {
-                if (value != null) setState(() => gender = value);
-              },
-            ),
-            const SizedBox(height: 30),
-
-            // save button
-            ElevatedButton(
-              onPressed: () async {
-                final name = nameController.text.trim();
-                final age  = int.tryParse(ageController.text.trim()) ?? 0;
-
-                if (name.isEmpty || age <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please fill in all fields')),
-                  );
-                  return;
-                }
-
-                try {
-                  await UserService().saveUserProfile(
-                    name: name,
-                    age:  age,
-                    gender: gender,
-                    imageFile: _selectedImage,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile updated!')),
-                  );
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
-                }
-              },
-              child: const Text('Save'),
+          ),
+          if (profile['age'] != null || profile['gender'] != null) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                "Age: ${profile['age'] ?? 'N/A'} • Gender: ${profile['gender'] ?? 'N/A'}",
+                style: const TextStyle(fontSize: 16, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
             ),
           ],
-        ),
-      ),
+          // Additional public info or reviews could be added here in the future.
+          if (profile['age'] == null && profile['gender'] == null) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                "No additional information provided.",
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ],
+      )),
     );
   }
 }

@@ -1,5 +1,3 @@
-// booking_screen.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -7,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/place_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/cloud_notification_service.dart';
-import '../services/push_notification_service.dart';
+// import '../services/push_notification_service.dart'; // only if still needed
 
 class BookingScreen extends StatefulWidget {
   final Place place;
@@ -35,12 +33,12 @@ class _BookingScreenState extends State<BookingScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // Fetch user profile
+    // Fetch user profile for name
     final requesterSnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .get();
-    final requesterName = requesterSnapshot['name'] ?? 'Someone';
+    final requesterName = requesterSnapshot.data()?['name'] ?? 'Someone';
 
     // Add booking record
     await FirebaseFirestore.instance.collection('reservations').add({
@@ -51,23 +49,49 @@ class _BookingScreenState extends State<BookingScreen> {
       'userName': requesterName,
       'startDate': _startDate!.toIso8601String(),
       'endDate': _endDate!.toIso8601String(),
+      'status': 'pending',
       'timestamp': FieldValue.serverTimestamp(),
     });
 
-    // Send push notification
+    // Ensure a chat thread exists for this booking
+    final participants = [user.uid, widget.place.vendor]..sort();
+    final chatDocId = "${participants[0]}_${participants[1]}_${widget.place.id}";
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatDocId);
+    final chatDoc = await chatRef.get();
+    if (!chatDoc.exists) {
+      await chatRef.set({
+        'participants': [user.uid, widget.place.vendor],
+        'placeId': widget.place.id,
+        'placeTitle': widget.place.title,
+        'lastMessage': '',
+        'lastMessageTime': DateTime.now().toIso8601String(),
+        'lastMessageSender': '',
+        'unreadCount_${user.uid}': 0,
+        'unreadCount_${widget.place.vendor}': 0,
+      });
+    } else {
+      await chatRef.set({
+        'participants': [user.uid, widget.place.vendor],
+        'placeId': widget.place.id,
+        'placeTitle': widget.place.title,
+        'unreadCount_${user.uid}': 0,
+        'unreadCount_${widget.place.vendor}': 0,
+      }, SetOptions(merge: true));
+    }
+
+    // Send push notification to place owner
     final ownerSnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.place.vendor)
         .get();
-
-    final ownerToken = ownerSnapshot['deviceToken'];
-
-    await CloudNotificationService.sendNotification(
-      token: ownerToken,
-      title: 'New Booking Request',
-      body: '$requesterName wants to book "${widget.place.title}" from ${DateFormat('yMMMd').format(_startDate!)} to ${DateFormat('yMMMd').format(_endDate!)}',
-    );
-
+    final ownerToken = ownerSnapshot.data()?['deviceToken'];
+    if (ownerToken != null) {
+      await CloudNotificationService.sendNotification(
+        token: ownerToken,
+        title: 'New Booking Request',
+        body: '$requesterName wants to book "${widget.place.title}" from ${DateFormat('yMMMd').format(_startDate!)} to ${DateFormat('yMMMd').format(_endDate!)}',
+      );
+    }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +113,7 @@ class _BookingScreenState extends State<BookingScreen> {
             firstDay: DateTime.now(),
             lastDay: DateTime.now().add(const Duration(days: 365)),
             focusedDay: _focusedDay,
-            onPageChanged: (day) => _focusedDay = day,
+            onPageChanged: (day) => setState(() => _focusedDay = day),
             calendarFormat: CalendarFormat.month,
             selectedDayPredicate: (day) {
               if (_startDate != null && _endDate != null) {
@@ -137,18 +161,18 @@ class _BookingScreenState extends State<BookingScreen> {
                     "Selected: ${DateFormat('yMMMd').format(_startDate!)} - ${DateFormat('yMMMd').format(_endDate!)}",
                     style: const TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 6),
                   Text(
                     "$nights night(s) x \$${widget.place.price} = \$${totalPrice}",
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _submitBooking,
+                    child: const Text("Request Booking"),
+                  ),
                 ],
               ),
             ),
-          ElevatedButton(
-            onPressed: (nights > 0) ? _submitBooking : null,
-            child: const Text("Request to Book"),
-          ),
         ],
       ),
     );

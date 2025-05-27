@@ -76,7 +76,10 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/': (context) => LoginScreen(),
           '/account-details': (context) => const AccountDetailsScreen(),
-          '/edit-profile': (context) => const UserProfileScreen(),
+          '/edit-profile': (context) {
+            final user = FirebaseAuth.instance.currentUser;
+            return UserProfileScreen(userId: user?.uid ?? '');
+          },
           '/home': (context) => const HomeScreen(),
           '/complete-profile': (context) => const CompleteProfileScreen(),
           '/verify-email': (context) => const VerifyEmailScreen(),

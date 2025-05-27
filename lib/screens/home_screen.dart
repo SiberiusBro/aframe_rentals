@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 30,
               color: selectedIndex == 3 ? Colors.blueAccent : Colors.black45,
             ),
-            label: "Message",
+            label: "Messages",
           ),
           BottomNavigationBarItem(
             icon: Image.network(

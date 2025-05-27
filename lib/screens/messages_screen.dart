@@ -19,42 +19,127 @@ class _MessagesScreenState extends State<MessagesScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(title: const Text("Messages")),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('chats').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('chats')
+            .where('participants', arrayContains: currentUser!.uid)
+            .orderBy('lastMessageTime', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-
-          final docs = snapshot.data!.docs;
-
-          // Filter chats that belong to the current user
-          final userChats = docs.where((doc) => doc.id.contains(currentUser!.uid)).toList();
+          final userChats = snapshot.data!.docs;
 
           if (userChats.isEmpty) {
             return const Center(child: Text("No messages yet."));
           }
 
-          return ListView.builder(
+          return ListView.separated(
             itemCount: userChats.length,
+            separatorBuilder: (context, index) => const Divider(color: Colors.black12, indent: 72, endIndent: 16, height: 1),
             itemBuilder: (context, index) {
-              final chatId = userChats[index].id;
+              final chatDoc = userChats[index];
+              final data = chatDoc.data() as Map<String, dynamic>;
+              // Determine other participant
+              final chatId = chatDoc.id;
               final parts = chatId.split('_');
               final otherUserId = parts.firstWhere((id) => id != currentUser!.uid);
               final placeId = parts.last;
+              // Retrieve chat metadata
+              final lastMessageText = (data['lastMessage'] ?? '') as String;
+              final hasUnread = data['unreadCount_${currentUser!.uid}'] != null && (data['unreadCount_${currentUser!.uid}'] as int) > 0;
+              // Format last message time if available
+              String timeDisplay = '';
+              if (data['lastMessageTime'] != null) {
+                try {
+                  final DateTime messageTime = DateTime.parse(data['lastMessageTime']);
+                  final now = DateTime.now();
+                  if (now.difference(messageTime).inDays == 0) {
+                    // same day, show HH:mm
+                    timeDisplay = MaterialLocalizations.of(context).formatTimeOfDay(
+                      TimeOfDay.fromDateTime(messageTime),
+                      alwaysUse24HourFormat: false,
+                    );
+                  } else {
+                    // older, show date
+                    timeDisplay = MaterialLocalizations.of(context).formatShortDate(messageTime);
+                  }
+                } catch (e) {
+                  // If parsing fails or stored as Timestamp, handle accordingly
+                  if (data['lastMessageTime'] is Timestamp) {
+                    final ts = data['lastMessageTime'] as Timestamp;
+                    final messageTime = ts.toDate();
+                    final now = DateTime.now();
+                    if (now.difference(messageTime).inDays == 0) {
+                      timeDisplay = MaterialLocalizations.of(context).formatTimeOfDay(
+                        TimeOfDay.fromDateTime(messageTime),
+                        alwaysUse24HourFormat: false,
+                      );
+                    } else {
+                      timeDisplay = MaterialLocalizations.of(context).formatShortDate(messageTime);
+                    }
+                  }
+                }
+              }
 
-              return ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text("Chat with $otherUserId"),
-                subtitle: Text("Tap to continue chat"),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(
-                        otherUserId: otherUserId,
-                        placeId: placeId,
+              // Build list item with user info
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
+                builder: (context, userSnapshot) {
+                  String otherName = otherUserId;
+                  String? otherPhoto;
+                  if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                    final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                    otherName = userData['name'] ?? otherName;
+                    otherPhoto = userData['photoUrl'] as String?;
+                  }
+                  return ListTile(
+                    leading: CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.black26,
+                      backgroundImage: (otherPhoto != null && otherPhoto.isNotEmpty)
+                          ? NetworkImage(otherPhoto)
+                          : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                    ),
+                    title: Text(
+                      otherName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                        color: Colors.black,
                       ),
                     ),
+                    subtitle: Text(
+                      lastMessageText.isEmpty ? "No messages yet" : lastMessageText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    trailing: (lastMessageText.isNotEmpty)
+                        ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (timeDisplay.isNotEmpty)
+                          Text(
+                            timeDisplay,
+                            style: TextStyle(fontSize: 12, color: Colors.black54),
+                          ),
+                        if (hasUnread) ...[
+                          const SizedBox(width: 5),
+                          const Icon(Icons.circle, color: Colors.red, size: 10),
+                        ],
+                      ],
+                    )
+                        : null,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(otherUserId: otherUserId, placeId: placeId),
+                        ),
+                      );
+                    },
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   );
                 },
               );
