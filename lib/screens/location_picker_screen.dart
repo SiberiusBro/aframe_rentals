@@ -1,60 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 class LocationPickerScreen extends StatefulWidget {
-  const LocationPickerScreen({super.key});
-
   @override
-  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
+  _LocationPickerScreenState createState() => _LocationPickerScreenState();
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
-  LatLng? selected;
-  GoogleMapController? mapController;
+  final TextEditingController _searchController = TextEditingController();
+  GoogleMapController? _mapController;
+  LatLng _selectedLocation = const LatLng(45.7489, 21.2087);
+  final String _sessionToken = const Uuid().v4();
 
   @override
-  void initState() {
-    super.initState();
-    _checkPermissions();
-  }
-
-  Future<void> _checkPermissions() async {
-    await Geolocator.requestPermission();
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Pick a Location")),
-      body: GoogleMap(
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(45.0, 25.0), // Default location
-          zoom: 6,
-        ),
-        onMapCreated: (controller) => mapController = controller,
-        onTap: (LatLng point) {
-          setState(() {
-            selected = point;
-          });
-        },
-        markers: selected == null
-            ? {}
-            : {
-          Marker(
-            markerId: const MarkerId('selected'),
-            position: selected!,
+      appBar: AppBar(title: const Text('Select Location')),
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: _selectedLocation,
+              zoom: 14.0,
+            ),
+            onMapCreated: (controller) => _mapController = controller,
+            markers: {
+              Marker(
+                markerId: const MarkerId('selected-location'),
+                position: _selectedLocation,
+              ),
+            },
+            onTap: (LatLng position) {
+              setState(() {
+                _selectedLocation = position;
+              });
+              _mapController?.animateCamera(CameraUpdate.newLatLng(position));
+            },
           ),
-        },
+          Positioned(
+            top: 10,
+            left: 15,
+            right: 15,
+            child: Material(
+              elevation: 5.0,
+              borderRadius: BorderRadius.circular(8),
+              child: GooglePlaceAutoCompleteTextField(
+                textEditingController: _searchController,
+                googleAPIKey: 'AIzaSyBukfII7TCZPVkPCk49PG4du-7GlQ7YLcs',
+                inputDecoration: const InputDecoration(
+                  hintText: 'Search location',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(15),
+                ),
+                debounceTime: 800,
+                isLatLngRequired: true,
+                getPlaceDetailWithLatLng: (prediction) {
+                  setState(() {
+                    _selectedLocation = LatLng(
+                      double.parse(prediction.lat!),
+                      double.parse(prediction.lng!),
+                    );
+                  });
+                  _mapController?.animateCamera(
+                    CameraUpdate.newLatLng(_selectedLocation),
+                  );
+                },
+                itemClick: (prediction) {
+                  _searchController.text = prediction.description!;
+                  _searchController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: prediction.description!.length),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: selected == null
-          ? null
-          : FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pop(context, selected);
+          Navigator.pop(context, _selectedLocation);
         },
-        label: const Text("Use this location"),
-        icon: const Icon(Icons.check),
+        child: const Icon(Icons.check),
       ),
     );
   }

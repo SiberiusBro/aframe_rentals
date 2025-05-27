@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:aframe_rentals/screens/add_place_screen.dart';
 import 'package:aframe_rentals/screens/account_details_screen.dart';
-import 'package:aframe_rentals/screens/account_details_screen.dart';
+import 'package:aframe_rentals/screens/notifications_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -42,26 +42,32 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 15),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       "Profile",
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
                     ),
-                    Icon(Icons.notifications_outlined, size: 35),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                        );
+                      },
+                      child: const Icon(Icons.notifications_outlined, size: 35),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 25),
-
-                /// Entire row is tappable now
                 GestureDetector(
                   onTap: () async {
                     await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const AccountDetailsScreen()),
                     );
-                    _reloadUser(); // reload in case of updates
+                    _reloadUser();
                   },
                   child: Row(
                     children: [
@@ -97,7 +103,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-
 
                 const SizedBox(height: 10),
                 const Divider(color: Colors.black12),
@@ -151,14 +156,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AccountDetailsScreen(),
-                      ),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountDetailsScreen()));
                   },
-
                   child: profileInfo(Icons.person_2_outlined, "Personal information"),
                 ),
                 profileInfo(Icons.security, "Login & security"),
@@ -175,7 +174,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 25),
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AddPlaceScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPlaceScreen()));
                   },
                   child: profileInfo(Icons.add_home_outlined, "List your space"),
                 ),

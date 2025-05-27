@@ -2,18 +2,44 @@ import 'package:flutter/material.dart';
 
 class StarRating extends StatefulWidget {
   final double rating;
-  const StarRating({super.key, required this.rating});
+  final void Function(double)? onChanged;
+
+  const StarRating({
+    super.key,
+    required this.rating,
+    this.onChanged,
+  });
 
   @override
   State<StarRating> createState() => _StarRatingState();
 }
 
 class _StarRatingState extends State<StarRating> {
-  Widget star(bool fill) {
-    return Icon(
-      Icons.star,
-      size: 18,
-      color: fill ? Colors.black : Colors.black26,
+  late double _currentRating;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentRating = widget.rating;
+  }
+
+  void _handleTap(int index) {
+    final newRating = index + 1.0;
+    if (widget.onChanged != null) {
+      setState(() => _currentRating = newRating);
+      widget.onChanged!(newRating);
+    }
+  }
+
+  Widget buildStar(int index) {
+    final isFilled = index < _currentRating.round();
+    return GestureDetector(
+      onTap: widget.onChanged != null ? () => _handleTap(index) : null,
+      child: Icon(
+        Icons.star,
+        size: 22,
+        color: isFilled ? Colors.black : Colors.black26,
+      ),
     );
   }
 
@@ -21,13 +47,7 @@ class _StarRatingState extends State<StarRating> {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(5, (index) {
-        if (index < (widget.rating).round()) {
-          return star(true);
-        } else {
-          return star(false);
-        }
-      }),
+      children: List.generate(5, buildStar),
     );
   }
 }

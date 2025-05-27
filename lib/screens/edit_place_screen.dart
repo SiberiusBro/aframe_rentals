@@ -19,9 +19,10 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController titleController;
-  late TextEditingController addressController;
   late TextEditingController priceController;
-  late TextEditingController bedAndBathController;
+  late TextEditingController descriptionController;
+  late TextEditingController bedsController;
+  late TextEditingController bathroomsController;
 
   List<File> newImages = [];
   bool isUploading = false;
@@ -30,9 +31,10 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.place.title);
-    addressController = TextEditingController(text: widget.place.address);
     priceController = TextEditingController(text: widget.place.price.toString());
-    bedAndBathController = TextEditingController(text: widget.place.bedAndBathroom);
+    descriptionController = TextEditingController(text: widget.place.description ?? '');
+    bedsController = TextEditingController(text: widget.place.beds?.toString() ?? '');
+    bathroomsController = TextEditingController(text: widget.place.bathrooms?.toString() ?? '');
   }
 
   Future<void> pickImages() async {
@@ -72,9 +74,10 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
 
       await FirebaseFirestore.instance.collection('places').doc(widget.placeId).update({
         'title': titleController.text,
-        'address': addressController.text,
         'price': int.parse(priceController.text),
-        'bedAndBathroom': bedAndBathController.text,
+        'description': descriptionController.text,
+        'beds': int.tryParse(bedsController.text) ?? 1,
+        'bathrooms': int.tryParse(bathroomsController.text) ?? 1,
         'imageUrls': imageUrls,
         'image': imageUrls.first,
       });
@@ -88,6 +91,16 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
     } finally {
       setState(() => isUploading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    priceController.dispose();
+    descriptionController.dispose();
+    bedsController.dispose();
+    bathroomsController.dispose();
+    super.dispose();
   }
 
   @override
@@ -106,17 +119,24 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
                 validator: (val) => val!.isEmpty ? "Required" : null,
               ),
               TextFormField(
-                controller: addressController,
-                decoration: const InputDecoration(labelText: "Address"),
-              ),
-              TextFormField(
                 controller: priceController,
-                decoration: const InputDecoration(labelText: "Price"),
+                decoration: const InputDecoration(labelText: "Price / Night"),
                 keyboardType: TextInputType.number,
               ),
               TextFormField(
-                controller: bedAndBathController,
-                decoration: const InputDecoration(labelText: "Bed & Bath"),
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+                maxLines: 3,
+              ),
+              TextFormField(
+                controller: bedsController,
+                decoration: const InputDecoration(labelText: "Beds"),
+                keyboardType: TextInputType.number,
+              ),
+              TextFormField(
+                controller: bathroomsController,
+                decoration: const InputDecoration(labelText: "Bathrooms"),
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(

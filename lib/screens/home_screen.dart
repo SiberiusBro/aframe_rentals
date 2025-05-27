@@ -1,3 +1,5 @@
+// ✅ FIXED: home_screen.dart
+import 'package:aframe_rentals/screens/messages_screen.dart';
 import 'package:aframe_rentals/screens/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,11 +9,10 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:aframe_rentals/services/the_provider.dart';
 import 'package:aframe_rentals/screens/login_screen.dart';
-import 'package:aframe_rentals/screens/home_screen.dart';
 
-import '../widgets/message.dart';
 import '../widgets/wishlist.dart';
 import 'explore_screen.dart';
+import 'chat_screen.dart'; // ✅ <-- Use the correct screen here
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

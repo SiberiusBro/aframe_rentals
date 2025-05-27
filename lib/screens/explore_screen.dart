@@ -1,3 +1,4 @@
+import 'package:aframe_rentals/screens/place_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:aframe_rentals/components/display_place.dart';
@@ -81,7 +82,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return ListView.builder(
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
-                      return DisplayPlace(place: filtered[index]);
+                      final place = filtered[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PlaceDetailScreen(place: place),
+                            ),
+                          );
+                        },
+                        child: DisplayPlace(place: place),
+                      );
                     },
                   );
                 },

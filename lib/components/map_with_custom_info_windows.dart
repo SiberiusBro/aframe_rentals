@@ -20,9 +20,9 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
   late GoogleMapController googleMapController;
 
   @override
-  void initState() {
-    super.initState();
-    _loadMarkers();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadMarkers(); // <- uses MediaQuery here
   }
 
   Future<void> _loadMarkers() async {

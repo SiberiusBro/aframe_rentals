@@ -1,7 +1,7 @@
 class Place {
   final String? id;
   final String title;
-  final String categoryId; // ✅ NEW
+  final String categoryId;
   bool isActive;
   final String image;
   final double rating;
@@ -17,11 +17,15 @@ class Place {
   final double latitude;
   final double longitude;
   final List<String> imageUrls;
+  final String? description;
+  final int? guests;
+  final int? beds;
+  final int? bathrooms;
 
   Place({
     this.id,
     required this.title,
-    required this.categoryId, // ✅ NEW
+    required this.categoryId,
     required this.isActive,
     required this.image,
     required this.rating,
@@ -37,35 +41,43 @@ class Place {
     required this.latitude,
     required this.longitude,
     required this.imageUrls,
+    required this.description,
+    required this.guests,
+    required this.beds,
+    required this.bathrooms,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
     return Place(
       id: json['id'],
-      title: json['title'],
-      categoryId: json['categoryId'] ?? '', // ✅ NEW
-      isActive: json['isActive'],
-      image: json['image'],
+      title: json['title'] ?? '',
+      categoryId: json['categoryId'] ?? '',
+      isActive: json['isActive'] ?? true,
+      image: json['image'] ?? '',
       rating: (json['rating'] ?? 0).toDouble(),
-      date: json['date'],
-      price: json['price'],
-      address: json['address'],
-      vendor: json['vendor'],
-      vendorProfession: json['vendorProfession'],
-      vendorProfile: json['vendorProfile'],
-      review: json['review'],
-      bedAndBathroom: json['bedAndBathroom'],
-      yearOfHostin: json['yearOfHostin'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      date: json['date'] ?? '',
+      price: json['price'] ?? 0,
+      address: json['address'] ?? '',
+      vendor: json['vendor'] ?? json['userId'] ?? '',
+      vendorProfession: json['vendorProfession'] ?? '',
+      vendorProfile: json['vendorProfile'] ?? '',
+      review: json['review'] ?? 0,
+      bedAndBathroom: json['bedAndBathroom'] ?? '',
+      yearOfHostin: json['yearOfHostin'] ?? 0,
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
+      description: json['description'] ?? '',
+      guests: json['guests'],
+      beds: json['beds'],
+      bathrooms: json['bathrooms'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'categoryId': categoryId, // ✅ NEW
+      'categoryId': categoryId,
       'isActive': isActive,
       'image': image,
       'rating': rating,
@@ -81,6 +93,10 @@ class Place {
       'latitude': latitude,
       'longitude': longitude,
       'imageUrls': imageUrls,
+      'description': description,
+      'guests': guests,
+      'beds': beds,
+      'bathrooms': bathrooms,
     };
   }
 }

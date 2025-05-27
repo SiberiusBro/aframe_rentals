@@ -6,8 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-import 'location_picker_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:aframe_rentals/screens/location_picker_screen.dart';
+import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
 
 LatLng? selectedLatLng;
 
@@ -22,16 +25,54 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final titleController = TextEditingController();
-  final addressController = TextEditingController();
   final priceController = TextEditingController();
-  final vendorController = TextEditingController();
-  final bedAndBathController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final bedsController = TextEditingController();
+  final bathroomsController = TextEditingController();
 
   List<File> selectedImages = [];
   bool isActive = true;
   bool isUploading = false;
+  String currency = 'EUR';
 
   final picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _setCurrencyByLocation();
+  }
+
+  Future<void> _setCurrencyByLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=${position.latitude}&lon=${position.longitude}&format=json',
+      );
+      final res = await http.get(url);
+      final data = json.decode(res.body);
+      final countryCode = data['address']['country_code'].toString().toUpperCase();
+
+      setState(() {
+        switch (countryCode) {
+          case 'RO':
+            currency = 'RON';
+            break;
+          case 'US':
+            currency = 'USD';
+            break;
+          case 'GB':
+            currency = 'GBP';
+            break;
+          default:
+            currency = 'EUR';
+        }
+      });
+    } catch (e) {
+      // fallback
+      currency = 'EUR';
+    }
+  }
 
   Future<void> pickImages() async {
     final List<XFile>? picked = await picker.pickMultiImage();
@@ -58,9 +99,9 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   }
 
   Future<void> submitPlace() async {
-    if (!_formKey.currentState!.validate() || selectedImages.isEmpty) {
+    if (!_formKey.currentState!.validate() || selectedImages.isEmpty || selectedLatLng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Fill all fields and pick images")),
+        const SnackBar(content: Text("Fill all fields, pick images and location")),
       );
       return;
     }
@@ -69,18 +110,15 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
 
     try {
       final imageUrls = await uploadImages(selectedImages);
-
       final docId = const Uuid().v4();
       final userId = FirebaseAuth.instance.currentUser?.uid;
 
       await FirebaseFirestore.instance.collection('places').doc(docId).set({
         'title': titleController.text,
-        'address': addressController.text,
         'price': int.parse(priceController.text),
-        'vendor': vendorController.text,
-        'bedAndBathroom': bedAndBathController.text,
-        'latitude': selectedLatLng?.latitude ?? 0,
-        'longitude': selectedLatLng?.longitude ?? 0,
+        'currency': currency,
+        'latitude': selectedLatLng!.latitude,
+        'longitude': selectedLatLng!.longitude,
         'rating': 4.5,
         'review': 0,
         'date': DateTime.now().toIso8601String(),
@@ -89,8 +127,11 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         'imageUrls': imageUrls,
         'image': imageUrls.first,
         'vendorProfession': 'Host',
-        'vendorProfile': '', // optional
+        'vendorProfile': '',
         'userId': userId,
+        'description': descriptionController.text,
+        'beds': int.tryParse(bedsController.text) ?? 1,
+        'bathrooms': int.tryParse(bathroomsController.text) ?? 1,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -98,7 +139,6 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       );
       Navigator.pop(context, 'refresh');
     } catch (e) {
-      print("Upload error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to add place")),
       );
@@ -110,10 +150,10 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   @override
   void dispose() {
     titleController.dispose();
-    addressController.dispose();
     priceController.dispose();
-    vendorController.dispose();
-    bedAndBathController.dispose();
+    descriptionController.dispose();
+    bedsController.dispose();
+    bathroomsController.dispose();
     super.dispose();
   }
 
@@ -127,48 +167,58 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              TextFormField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+              _styledField(titleController, 'Title'),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: priceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Price / Night',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  DropdownButton<String>(
+                    value: currency,
+                    items: ['EUR', 'USD', 'RON', 'GBP']
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (val) => setState(() => currency = val!),
+                  )
+                ],
               ),
-              TextFormField(
-                controller: addressController,
-                decoration: const InputDecoration(labelText: 'Address'),
+              const SizedBox(height: 12),
+              _styledField(descriptionController, 'Description', maxLines: 3),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _styledField(bedsController, 'Beds', isNum: true)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _styledField(bathroomsController, 'Bathrooms', isNum: true)),
+                ],
               ),
-              TextFormField(
-                controller: priceController,
-                decoration: const InputDecoration(labelText: 'Price'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: vendorController,
-                decoration: const InputDecoration(labelText: 'Vendor'),
-              ),
-              TextFormField(
-                controller: bedAndBathController,
-                decoration: const InputDecoration(labelText: 'Bed & Bath Info'),
-              ),
+              const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () async {
                   final LatLng? picked = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+                    MaterialPageRoute(builder: (_) => LocationPickerScreen()),
                   );
                   if (picked != null) {
-                    setState(() {
-                      selectedLatLng = picked;
-                    });
+                    setState(() => selectedLatLng = picked);
                   }
                 },
                 icon: const Icon(Icons.map),
                 label: Text(
                   selectedLatLng != null
-                      ? "Selected: ${selectedLatLng!.latitude.toStringAsFixed(4)}, ${selectedLatLng!.longitude.toStringAsFixed(4)}"
+                      ? "Location: ${selectedLatLng!.latitude.toStringAsFixed(4)}, ${selectedLatLng!.longitude.toStringAsFixed(4)}"
                       : "Pick Location",
                 ),
               ),
-
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: pickImages,
@@ -204,6 +254,19 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _styledField(TextEditingController controller, String label,
+      {int maxLines = 1, bool isNum = false}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+      ),
+      maxLines: maxLines,
+      keyboardType: isNum ? TextInputType.number : TextInputType.text,
     );
   }
 }
