@@ -1,6 +1,8 @@
 import 'package:aframe_rentals/services/the_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:aframe_rentals/models/place_model.dart';
+import 'package:aframe_rentals/screens/place_detail_screen.dart';
 
 class Wishlists extends StatelessWidget {
   const Wishlists({super.key});
@@ -50,79 +52,88 @@ class Wishlists extends StatelessWidget {
                     : SizedBox(
                   height: MediaQuery.of(context).size.height * 0.68,
                   child: GridView.builder(
-                      itemCount: favoriteItems.length,
-                      gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 8,mainAxisSpacing: 8
-                      ),
-                      itemBuilder: (context, index) {
-                        String favorite = favoriteItems[index];
-                        return FutureBuilder(
-                            future: FirebaseFirestore.instance
-                                .collection("myAppCollection")
-                                .doc(favorite)
-                                .get(),
-                            builder: (context, snapShot) {
-                              if (snapShot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              if (!snapShot.hasData ||
-                                  snapShot.data == null) {
-                                return const Center(
-                                  child: Text("Error loading favorites"),
-                                );
-                              }
-                              var favoriteItems = snapShot.data!;
-                              return Stack(
+                    itemCount: favoriteItems.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemBuilder: (context, index) {
+                      String favorite = favoriteItems[index];
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('places')
+                            .doc(favorite)
+                            .get(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (!snapshot.hasData || snapshot.data == null) {
+                            return const Center(child: Text("Error loading favorites"));
+                          }
+                          final docSnap = snapshot.data!;
+                          final data = docSnap.data() as Map<String, dynamic>;
+                          data['id'] = docSnap.id;
+                          final place = Place.fromJson(data);
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => PlaceDetailScreen(place: place)),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Stack(
                                 children: [
-                                  // image of favorite items
+                                  // image of favorite item
                                   Container(
                                     decoration: BoxDecoration(
-                                      borderRadius:
-                                      BorderRadius.circular(15),
+                                      borderRadius: BorderRadius.circular(15),
                                       image: DecorationImage(
                                         fit: BoxFit.cover,
-                                        image: NetworkImage(
-                                          favoriteItems['image'],
-                                        ),
+                                        image: NetworkImage(place.image),
                                       ),
                                     ),
                                   ),
                                   // favorite icon in the top right corner
-                                  const Positioned(
+                                  Positioned(
                                     top: 8,
                                     right: 8,
-                                    child: Icon(
-                                      Icons.favorite,
-                                      color: Colors.red,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.favorite, color: Colors.red),
+                                      onPressed: () {
+                                        provider.toggleFavorite(docSnap);
+                                      },
                                     ),
                                   ),
-                                  // title of favorite items
+                                  // title of favorite item
                                   Positioned(
-                                      bottom: 8,
-                                      left: 8,
-                                      right: 8,
-                                      child: Container(
-                                        color:
-                                        Colors.black.withOpacity(0.6),
-                                        padding: const EdgeInsets.all(4),
-                                        child: Text(
-                                          favoriteItems['title'],
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
+                                    bottom: 8,
+                                    left: 8,
+                                    right: 8,
+                                    child: Container(
+                                      color: Colors.black.withOpacity(0.6),
+                                      padding: const EdgeInsets.all(4),
+                                      child: Text(
+                                        place.title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ))
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
                                 ],
-                              );
-                            });
-                      }),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

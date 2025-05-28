@@ -1,18 +1,14 @@
-// ✅ FIXED: home_screen.dart
 import 'package:aframe_rentals/screens/messages_screen.dart';
 import 'package:aframe_rentals/screens/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:aframe_rentals/services/the_provider.dart';
-import 'package:aframe_rentals/screens/login_screen.dart';
 
 import '../widgets/wishlist.dart';
 import 'explore_screen.dart';
-import 'chat_screen.dart'; // ✅ <-- Use the correct screen here
+import 'chat_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,17 +20,28 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int selectedIndex = 0;
   late final List<Widget> page;
+  bool _favoritesLoaded = false;
 
   @override
   void initState() {
+    super.initState();
     page = [
       const ExploreScreen(),
       const Wishlists(),
-      const Scaffold(),
+      const Scaffold(), // Trip placeholder
       const MessagesScreen(),
       const ProfilePage(),
     ];
-    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_favoritesLoaded) {
+      // Load current user's favorites when HomeScreen is first shown
+      Provider.of<TheProvider>(context, listen: false).loadFavorite();
+      _favoritesLoaded = true;
+    }
   }
 
   @override

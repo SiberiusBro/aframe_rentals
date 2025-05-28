@@ -1,84 +1,89 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:aframe_rentals/services/the_provider.dart';
 import 'package:provider/provider.dart';
 
 class TheProvider extends ChangeNotifier {
-  // we hae also save the favorite items in firebase and display it in nex time
-  // it is not loast until user remove from favoite
+  // Favorite place IDs for the current user
   List<String> _favoriteIds = [];
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
   List<String> get favorites => _favoriteIds;
 
   TheProvider() {
-    loadFavorite();
+    // Load favorites for the current user (if any)
+    if (FirebaseAuth.instance.currentUser != null) {
+      loadFavorite();
+    }
   }
 
-  // toggle favorites states
-  void toggleFavorite(DocumentSnapshot place) async {
-    String placeId = place.id;
-    if (_favoriteIds.contains(placeId)) {
-      _favoriteIds.remove(placeId);
-      await _removeFavorite(placeId); // remove grom favorite
-    } else {
-      _favoriteIds.add(placeId);
-      await _addFavorites(placeId); // add to favorite
+  // Toggle a place's favorite state for the current user
+  Future<void> toggleFavoriteById(String placeId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      if (_favoriteIds.contains(placeId)) {
+        _favoriteIds.remove(placeId);
+        // Remove from user's favorites in Firestore
+        await firebaseFirestore
+            .collection("userFavorites")
+            .doc(user.uid)
+            .collection("favorites")
+            .doc(placeId)
+            .delete();
+      } else {
+        _favoriteIds.add(placeId);
+        // Add to user's favorites in Firestore
+        await firebaseFirestore
+            .collection("userFavorites")
+            .doc(user.uid)
+            .collection("favorites")
+            .doc(placeId)
+            .set({'isFavorite': true});
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error toggling favorite: ${e.toString()}");
+      }
     }
     notifyListeners();
   }
 
-  // check if a place is afavorited
-  bool isExist(DocumentSnapshot place) {
-    return _favoriteIds.contains(place.id);
+  // (Optional) Toggle favorites using a DocumentSnapshot (for compatibility)
+  Future<void> toggleFavorite(DocumentSnapshot place) async {
+    await toggleFavoriteById(place.id);
   }
 
-  // add favorites items to firestore
-  Future<void> _addFavorites(String placeId) async {
-    try {
-      // create the userFavorite collection and add items as favorites in firestore
-      await firebaseFirestore
-          .collection("userFavorites")
-          .doc(placeId)
-          .set({'isFavorite': true});
-    } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
-    }
+  // Check if a place is favorited by the current user
+  bool isFavorite(String placeId) {
+    return _favoriteIds.contains(placeId);
   }
 
-  // remove favorites items from friestore
-  Future<void> _removeFavorite(String placeId) async {
-    try {
-      // create the userFavorite collection and add items as favorites in firestore
-      await firebaseFirestore.collection("userFavorites").doc(placeId).delete();
-    } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
-    }
-  }
-
-  // load favorites itesm from firestore (if user make some items favorite then load this items)
+  // Load favorite place IDs for the current user from Firestore
   Future<void> loadFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _favoriteIds = [];
+      notifyListeners();
+      return;
+    }
     try {
-      QuerySnapshot snapshot =
-      await firebaseFirestore.collection("userFavorites").get();
+      final snapshot = await firebaseFirestore
+          .collection("userFavorites")
+          .doc(user.uid)
+          .collection("favorites")
+          .get();
       _favoriteIds = snapshot.docs.map((doc) => doc.id).toList();
     } catch (e) {
       if (kDebugMode) {
-        print(e.toString());
+        print("Error loading favorites: ${e.toString()}");
       }
     }
     notifyListeners();
   }
 
-  // Static method to access the provider from any context
+  // Static helper to easily access the provider
   static TheProvider of(BuildContext context, {bool listen = true}) {
-    return Provider.of<TheProvider>(
-      context,
-      listen: listen,
-    );
+    return Provider.of<TheProvider>(context, listen: listen);
   }
 }

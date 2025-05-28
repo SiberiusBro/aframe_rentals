@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../models/place_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/cloud_notification_service.dart';
-// import '../services/push_notification_service.dart'; // only if still needed
 
 class BookingScreen extends StatefulWidget {
   final Place place;
@@ -29,18 +28,12 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Future<void> _submitBooking() async {
     if (_startDate == null || _endDate == null) return;
-
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-
-    // Fetch user profile for name
-    final requesterSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
+    // Get requester name
+    final requesterSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     final requesterName = requesterSnapshot.data()?['name'] ?? 'Someone';
-
-    // Add booking record
+    // Add reservation entry
     await FirebaseFirestore.instance.collection('reservations').add({
       'placeId': widget.place.id,
       'placeTitle': widget.place.title,
@@ -52,8 +45,7 @@ class _BookingScreenState extends State<BookingScreen> {
       'status': 'pending',
       'timestamp': FieldValue.serverTimestamp(),
     });
-
-    // Ensure a chat thread exists for this booking
+    // Ensure a chat thread exists for messaging
     final participants = [user.uid, widget.place.vendor]..sort();
     final chatDocId = "${participants[0]}_${participants[1]}_${widget.place.id}";
     final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatDocId);
@@ -78,21 +70,16 @@ class _BookingScreenState extends State<BookingScreen> {
         'unreadCount_${widget.place.vendor}': 0,
       }, SetOptions(merge: true));
     }
-
-    // Send push notification to place owner
-    final ownerSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.place.vendor)
-        .get();
+    // Send a push notification to the owner
+    final ownerSnapshot = await FirebaseFirestore.instance.collection('users').doc(widget.place.vendor).get();
     final ownerToken = ownerSnapshot.data()?['deviceToken'];
     if (ownerToken != null) {
       await CloudNotificationService.sendNotification(
         token: ownerToken,
         title: 'New Booking Request',
-        body: '$requesterName wants to book "${widget.place.title}" from ${DateFormat('yMMMd').format(_startDate!)} to ${DateFormat('yMMMd').format(_endDate!)}',
+        body: '${requesterName} wants to book "${widget.place.title}" from ${DateFormat('yMMMd').format(_startDate!)} to ${DateFormat('yMMMd').format(_endDate!)}',
       );
     }
-
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Booking request sent!")),
@@ -104,6 +91,41 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget build(BuildContext context) {
     final nights = _calculateNights();
     final totalPrice = nights * widget.place.price;
+    // Format currency for display
+    Locale locale = Localizations.localeOf(context);
+    String countryCode = locale.countryCode ?? 'US';
+    String currencySymbol;
+    if (countryCode == 'RO') {
+      currencySymbol = '';
+    } else if (countryCode == 'GB') {
+      currencySymbol = '£';
+    } else if (countryCode == 'US' || countryCode == 'AU' || countryCode == 'CA' || countryCode == 'NZ') {
+      currencySymbol = '\$';
+    } else if (['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES'].contains(countryCode)) {
+      currencySymbol = '€';
+    } else {
+      currencySymbol = NumberFormat.simpleCurrency(locale: locale.toString()).currencySymbol;
+    }
+    String unitPriceStr = widget.place.price.toString();
+    if (unitPriceStr.endsWith('.0')) {
+      unitPriceStr = unitPriceStr.substring(0, unitPriceStr.length - 2);
+    }
+    String totalStr = totalPrice.toString();
+    if (totalStr.endsWith('.0')) {
+      totalStr = totalStr.substring(0, totalStr.length - 2);
+    }
+    late String unitDisplay;
+    late String totalDisplay;
+    if (countryCode == 'RO') {
+      unitDisplay = "$unitPriceStr RON";
+      totalDisplay = "$totalStr RON";
+    } else if (RegExp(r'^[A-Za-z]+$').hasMatch(currencySymbol)) {
+      unitDisplay = "$unitPriceStr $currencySymbol";
+      totalDisplay = "$totalStr $currencySymbol";
+    } else {
+      unitDisplay = "$currencySymbol$unitPriceStr";
+      totalDisplay = "$currencySymbol$totalStr";
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Select Dates')),
@@ -162,7 +184,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     style: const TextStyle(fontSize: 16),
                   ),
                   Text(
-                    "$nights night(s) x \$${widget.place.price} = \$${totalPrice}",
+                    "$nights night(s) x $unitDisplay = $totalDisplay",
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -178,4 +200,3 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 }
-
