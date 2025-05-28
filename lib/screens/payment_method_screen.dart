@@ -38,7 +38,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
       // 1. Create payment intent on backend
       final response = await http.post(
-        Uri.parse('https://YOUR-BACKEND-URL/payments/create-payment-intent'),
+        Uri.parse('https://us-central1-afframe-rental.cloudfunctions.net/createPaymentIntent'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'amount': (widget.place.price * widget.place.price).toInt(), // amount in smallest currency unit
@@ -58,8 +58,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       // 2. Confirm payment with Stripe
       try {
         await Stripe.instance.confirmPayment(
-          clientSecret,
-          PaymentMethodParams.card(paymentMethodData: PaymentMethodData()),
+          paymentIntentClientSecret: clientSecret,
+          data: PaymentMethodParams.card(paymentMethodData: PaymentMethodData()),
         );
         await _createReservation('card', 'paid');
         setState(() => _isProcessing = false);
@@ -67,7 +67,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Payment successful, booking requested.")));
       } catch (e) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Payment failed: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment failed: $e")),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter card details or select cash.")));
