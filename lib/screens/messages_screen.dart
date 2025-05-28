@@ -36,7 +36,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
           return ListView.separated(
             itemCount: userChats.length,
-            separatorBuilder: (context, index) => const Divider(color: Colors.black12, indent: 72, endIndent: 16, height: 1),
+            separatorBuilder: (context, index) => const Divider(
+              color: Colors.black12,
+              indent: 72,
+              endIndent: 16,
+              height: 1,
+            ),
             itemBuilder: (context, index) {
               final chatDoc = userChats[index];
               final data = chatDoc.data() as Map<String, dynamic>;
@@ -47,7 +52,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
               final placeId = parts.last;
               // Retrieve chat metadata
               final lastMessageText = (data['lastMessage'] ?? '') as String;
-              final hasUnread = data['unreadCount_${currentUser!.uid}'] != null && (data['unreadCount_${currentUser!.uid}'] as int) > 0;
+              final hasUnread = data['unreadCount_${currentUser!.uid}'] != null &&
+                  (data['unreadCount_${currentUser!.uid}'] as int) > 0;
               // Format last message time if available
               String timeDisplay = '';
               if (data['lastMessageTime'] != null) {
@@ -62,7 +68,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     );
                   } else {
                     // older, show date
-                    timeDisplay = MaterialLocalizations.of(context).formatShortDate(messageTime);
+                    timeDisplay =
+                        MaterialLocalizations.of(context).formatShortDate(messageTime);
                   }
                 } catch (e) {
                   // If parsing fails or stored as Timestamp, handle accordingly
@@ -76,13 +83,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         alwaysUse24HourFormat: false,
                       );
                     } else {
-                      timeDisplay = MaterialLocalizations.of(context).formatShortDate(messageTime);
+                      timeDisplay =
+                          MaterialLocalizations.of(context).formatShortDate(messageTime);
                     }
                   }
                 }
               }
 
-              // Build list item with user info
+              // Build list item with user info, wrapped in Dismissible to enable deletion
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
                 builder: (context, userSnapshot) {
@@ -93,53 +101,84 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     otherName = userData['name'] ?? otherName;
                     otherPhoto = userData['photoUrl'] as String?;
                   }
-                  return ListTile(
-                    leading: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: Colors.black26,
-                      backgroundImage: (otherPhoto != null && otherPhoto.isNotEmpty)
-                          ? NetworkImage(otherPhoto)
-                          : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                  return Dismissible(
+                    key: ValueKey(chatId),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
                     ),
-                    title: Text(
-                      otherName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                        color: Colors.black,
-                      ),
-                    ),
-                    subtitle: Text(
-                      lastMessageText.isEmpty ? "No messages yet" : lastMessageText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    trailing: (lastMessageText.isNotEmpty)
-                        ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (timeDisplay.isNotEmpty)
-                          Text(
-                            timeDisplay,
-                            style: TextStyle(fontSize: 12, color: Colors.black54),
-                          ),
-                        if (hasUnread) ...[
-                          const SizedBox(width: 5),
-                          const Icon(Icons.circle, color: Colors.red, size: 10),
-                        ],
-                      ],
-                    )
-                        : null,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatScreen(otherUserId: otherUserId, placeId: placeId),
-                        ),
+                    onDismissed: (direction) async {
+                      // Delete all messages in this chat from Firestore
+                      final messagesRef = FirebaseFirestore.instance
+                          .collection('chats')
+                          .doc(chatId)
+                          .collection('messages');
+                      final messagesSnap = await messagesRef.get();
+                      for (var msgDoc in messagesSnap.docs) {
+                        await msgDoc.reference.delete();
+                      }
+                      // Delete the chat document itself
+                      await FirebaseFirestore.instance.collection('chats').doc(chatId).delete();
+                      // Show feedback
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Conversation deleted")),
                       );
                     },
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.black26,
+                        backgroundImage: (otherPhoto != null && otherPhoto.isNotEmpty)
+                            ? NetworkImage(otherPhoto)
+                            : const AssetImage('assets/images/default_avatar.png')
+                        as ImageProvider,
+                      ),
+                      title: Text(
+                        otherName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                          color: Colors.black,
+                        ),
+                      ),
+                      subtitle: Text(
+                        lastMessageText.isEmpty ? "No messages yet" : lastMessageText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      trailing: (lastMessageText.isNotEmpty)
+                          ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (timeDisplay.isNotEmpty)
+                            Text(
+                              timeDisplay,
+                              style: const TextStyle(fontSize: 12, color: Colors.black54),
+                            ),
+                          if (hasUnread) ...[
+                            const SizedBox(width: 5),
+                            const Icon(Icons.circle, color: Colors.red, size: 10),
+                          ],
+                        ],
+                      )
+                          : null,
+                      contentPadding:
+                      const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      onTap: () {
+                        // Open the chat conversation
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ChatScreen(otherUserId: otherUserId, placeId: placeId),
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               );

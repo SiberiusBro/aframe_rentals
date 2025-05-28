@@ -1,3 +1,4 @@
+import 'package:aframe_rentals/screens/payment_method_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -18,7 +19,43 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   DateTime _focusedDay = DateTime.now();
+  List<DateTime> _reservedDates = [];  // Dates already booked for this place
 
+  @override
+  void initState() {
+    super.initState();
+    _loadReservedDates();
+  }
+
+  // Load all accepted reservations for this place and collect their dates
+  Future<void> _loadReservedDates() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('reservations')
+        .where('placeId', isEqualTo: widget.place.id)
+        .where('status', isEqualTo: 'accepted')
+        .get();
+    final docs = snapshot.docs;
+    List<DateTime> reserved = [];
+    for (var doc in docs) {
+      final data = doc.data();
+      if (data['startDate'] != null && data['endDate'] != null) {
+        DateTime start = DateTime.parse(data['startDate']);
+        DateTime end = DateTime.parse(data['endDate']);
+        // Include all days from start to end inclusive
+        DateTime current = start;
+        while (!current.isAfter(end)) {
+          reserved.add(DateTime(
+              current.year, current.month, current.day)); // normalize to date
+          current = current.add(const Duration(days: 1));
+        }
+      }
+    }
+    setState(() {
+      _reservedDates = reserved;
+    });
+  }
+
+  // Calculate number of nights for the selected range
   int _calculateNights() {
     if (_startDate != null && _endDate != null) {
       return _endDate!.difference(_startDate!).inDays;
@@ -31,9 +68,10 @@ class _BookingScreenState extends State<BookingScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     // Get requester name
-    final requesterSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final requesterSnapshot =
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     final requesterName = requesterSnapshot.data()?['name'] ?? 'Someone';
-    // Add reservation entry
+    // Add reservation entry (pending approval)
     await FirebaseFirestore.instance.collection('reservations').add({
       'placeId': widget.place.id,
       'placeTitle': widget.place.title,
@@ -45,7 +83,7 @@ class _BookingScreenState extends State<BookingScreen> {
       'status': 'pending',
       'timestamp': FieldValue.serverTimestamp(),
     });
-    // Ensure a chat thread exists for messaging
+    // Ensure a chat thread exists for messaging between requester and owner
     final participants = [user.uid, widget.place.vendor]..sort();
     final chatDocId = "${participants[0]}_${participants[1]}_${widget.place.id}";
     final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatDocId);
@@ -70,53 +108,37 @@ class _BookingScreenState extends State<BookingScreen> {
         'unreadCount_${widget.place.vendor}': 0,
       }, SetOptions(merge: true));
     }
-    // Send a push notification to the owner
-    final ownerSnapshot = await FirebaseFirestore.instance.collection('users').doc(widget.place.vendor).get();
+    // Send a push notification to the owner about the new booking request
+    final ownerSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.place.vendor)
+        .get();
     final ownerToken = ownerSnapshot.data()?['deviceToken'];
     if (ownerToken != null) {
       await CloudNotificationService.sendNotification(
         token: ownerToken,
         title: 'New Booking Request',
-        body: '${requesterName} wants to book "${widget.place.title}" from ${DateFormat('yMMMd').format(_startDate!)} to ${DateFormat('yMMMd').format(_endDate!)}',
+        body:
+        '${requesterName} wants to book "${widget.place.title}" from ${DateFormat('yMMMd').format(_startDate!)} to ${DateFormat('yMMMd').format(_endDate!)}',
       );
     }
     if (!mounted) return;
+    // Close the booking screen after submitting
+    Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking request sent!")),
+      const SnackBar(content: Text("Booking request sent")),
     );
-    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Calculate price breakdown for display (assuming Place has pricing info)
     final nights = _calculateNights();
-    final totalPrice = nights * widget.place.price;
-    // Format currency for display
-    Locale locale = Localizations.localeOf(context);
-    String countryCode = locale.countryCode ?? 'US';
-    String currencySymbol;
-    if (countryCode == 'RO') {
-      currencySymbol = '';
-    } else if (countryCode == 'GB') {
-      currencySymbol = '£';
-    } else if (countryCode == 'US' || countryCode == 'AU' || countryCode == 'CA' || countryCode == 'NZ') {
-      currencySymbol = '\$';
-    } else if (['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES'].contains(countryCode)) {
-      currencySymbol = '€';
-    } else {
-      currencySymbol = NumberFormat.simpleCurrency(locale: locale.toString()).currencySymbol;
-    }
-    String unitPriceStr = widget.place.price.toString();
-    if (unitPriceStr.endsWith('.0')) {
-      unitPriceStr = unitPriceStr.substring(0, unitPriceStr.length - 2);
-    }
-    String totalStr = totalPrice.toString();
-    if (totalStr.endsWith('.0')) {
-      totalStr = totalStr.substring(0, totalStr.length - 2);
-    }
-    late String unitDisplay;
-    late String totalDisplay;
-    if (countryCode == 'RO') {
+    String unitDisplay = "", totalDisplay = "";
+    final currencySymbol = widget.place.currency ?? "€";
+    final unitPriceStr = widget.place.price.toString();
+    final totalStr = (widget.place.price * (nights > 0 ? nights : 1)).toString();
+    if (currencySymbol == 'RON') {
       unitDisplay = "$unitPriceStr RON";
       totalDisplay = "$totalStr RON";
     } else if (RegExp(r'^[A-Za-z]+$').hasMatch(currencySymbol)) {
@@ -137,7 +159,13 @@ class _BookingScreenState extends State<BookingScreen> {
             focusedDay: _focusedDay,
             onPageChanged: (day) => setState(() => _focusedDay = day),
             calendarFormat: CalendarFormat.month,
+            // Disable days that are reserved (already booked)
+            enabledDayPredicate: (day) {
+              // Only allow selection of days not in reserved list
+              return !_reservedDates.any((d) => isSameDay(d, day));
+            },
             selectedDayPredicate: (day) {
+              // Highlight the entire selected range from _startDate to _endDate
               if (_startDate != null && _endDate != null) {
                 return day.isAfter(_startDate!.subtract(const Duration(days: 1))) &&
                     day.isBefore(_endDate!.add(const Duration(days: 1)));
@@ -146,16 +174,30 @@ class _BookingScreenState extends State<BookingScreen> {
               }
               return false;
             },
-            onDaySelected: (selected, _) {
+            onDaySelected: (selectedDay, _) {
               setState(() {
-                _focusedDay = selected;
+                _focusedDay = selectedDay;
                 if (_startDate == null || (_startDate != null && _endDate != null)) {
-                  _startDate = selected;
+                  // No range selected yet, or a range was already selected – start a new selection
+                  _startDate = selectedDay;
                   _endDate = null;
-                } else if (selected.isAfter(_startDate!)) {
-                  _endDate = selected;
+                } else if (selectedDay.isAfter(_startDate!)) {
+                  // Attempting to select an end date after the start
+                  bool overlapsReserved = _reservedDates.any((d) =>
+                  !d.isBefore(_startDate!) && !d.isAfter(selectedDay));
+                  if (overlapsReserved) {
+                    // The range from _startDate to selectedDay hits an existing reservation
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Selected dates overlap an existing reservation.")),
+                    );
+                    // Do not set _endDate, keep current _startDate
+                    return;
+                  }
+                  // Valid end date (no overlap)
+                  _endDate = selectedDay;
                 } else {
-                  _startDate = selected;
+                  // Selected a date before the current start date – treat as new start
+                  _startDate = selectedDay;
                   _endDate = null;
                 }
               });
@@ -169,11 +211,20 @@ class _BookingScreenState extends State<BookingScreen> {
                 color: Colors.blueAccent,
                 shape: BoxShape.circle,
               ),
-              weekendTextStyle: const TextStyle(color: Colors.black),
+              // Color-code availability: green for available, red for reserved
+              defaultTextStyle: const TextStyle(color: Colors.green),
+              weekendTextStyle: const TextStyle(color: Colors.green),
+              disabledTextStyle: const TextStyle(color: Colors.red),
+              disabledDecoration: const BoxDecoration(
+                color: Color(0x1FFF0000), // semi-transparent red circle
+                shape: BoxShape.circle,
+              ),
+              selectedTextStyle: const TextStyle(color: Colors.white),
               outsideDaysVisible: false,
             ),
           ),
           const SizedBox(height: 16),
+          // Display the selected date range and total if a range is picked
           if (_startDate != null && _endDate != null)
             Padding(
               padding: const EdgeInsets.all(16),
@@ -189,8 +240,19 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _submitBooking,
-                    child: const Text("Request Booking"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentMethodScreen(
+                            place: widget.place,
+                            startDate: _startDate!,
+                            endDate: _endDate!,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Proceed to Payment"),
                   ),
                 ],
               ),

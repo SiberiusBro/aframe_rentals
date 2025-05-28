@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aframe_rentals/widgets/save_device_token.dart';
 import 'package:aframe_rentals/screens/notifications_screen.dart';
-
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -26,6 +26,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Stripe.publishableKey = 'pk_test_51RTkpLQmqvmXdvHnIg4uJWrB4OEqSjzQPCwL0MkIe16qp3fVOKbhvjpFQHyGas07iIqpsnwPYtQb6lC0s1Gd8jHE00QINO3JOY';
   await Firebase.initializeApp();
 
   // 🔐 Save the token if the user is already logged in

@@ -21,6 +21,7 @@ class Place {
   final int? guests;
   final int? beds;
   final int? bathrooms;
+  final String currency;
 
   Place({
     this.id,
@@ -45,6 +46,7 @@ class Place {
     required this.guests,
     required this.beds,
     required this.bathrooms,
+    required this.currency,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
@@ -71,6 +73,7 @@ class Place {
       guests: json['guests'],
       beds: json['beds'],
       bathrooms: json['bathrooms'],
+      currency: json['currency'] ?? 'RON',
     );
   }
 
@@ -98,6 +101,7 @@ class Place {
       'guests': guests,
       'beds': beds,
       'bathrooms': bathrooms,
+      'currency': currency,
     };
   }
 }
