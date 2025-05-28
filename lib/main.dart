@@ -27,6 +27,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Stripe.publishableKey = 'pk_test_51RTkpLQmqvmXdvHnIg4uJWrB4OEqSjzQPCwL0MkIe16qp3fVOKbhvjpFQHyGas07iIqpsnwPYtQb6lC0s1Gd8jHE00QINO3JOY';
+  await Stripe.instance.applySettings();
   await Firebase.initializeApp();
 
   // 🔐 Save the token if the user is already logged in

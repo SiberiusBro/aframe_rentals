@@ -91,3 +91,5 @@ exports.createPaymentIntent = functions.https.onRequest(async (req, res) => {
     return res.status(500).send({ success: false, error: error.message });
   }
 });
+
+//Im loosing my mind
