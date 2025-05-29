@@ -1,0 +1,2 @@
+D:/Afframes/android/app/.cxx/Debug/4g3g6u43/x86/CMakeFiles/edit_cache.dir
+D:/Afframes/android/app/.cxx/Debug/4g3g6u43/x86/CMakeFiles/rebuild_cache.dir
