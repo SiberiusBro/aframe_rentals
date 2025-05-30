@@ -21,7 +21,7 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
   final CollectionReference placeCollection = FirebaseFirestore.instance.collection("places");
 
   List<Marker> markers = [];
-  late GoogleMapController googleMapController;
+  GoogleMapController? googleMapController;
 
   @override
   void didChangeDependencies() {
@@ -262,7 +262,7 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
         ),
       );
     }
-    await googleMapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+    await googleMapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
   }
 
   @override
