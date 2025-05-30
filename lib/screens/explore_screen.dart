@@ -2,7 +2,6 @@ import 'package:aframe_rentals/screens/place_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:aframe_rentals/components/display_place.dart';
-import 'package:aframe_rentals/components/display_total_price.dart';
 import 'package:aframe_rentals/components/map_with_custom_info_windows.dart';
 import 'package:aframe_rentals/components/search_bar_and_filter.dart';
 import 'package:aframe_rentals/models/place_model.dart';
@@ -17,6 +16,14 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  final List<Map<String, dynamic>> tags = [
+    {'name': 'All', 'icon': Icons.apps},
+    {'name': 'Beach', 'icon': Icons.beach_access},
+    {'name': 'Mountain', 'icon': Icons.terrain},
+    {'name': 'Rural', 'icon': Icons.grass},
+    {'name': 'Urban', 'icon': Icons.location_city},
+  ];
+  String? selectedTag = 'All';
   List<Category> categories = [];
   String? selectedCategoryId;
   List<Place> allPlaces = [];
@@ -55,6 +62,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SearchBarAndFilter(),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: tags.map((tag) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(tag['icon'], size: 16),
+                            SizedBox(width: 5),
+                            Text(tag['name']),
+                          ],
+                        ),
+                        selected: selectedTag == tag['name'],
+                        onSelected: (_) {
+                          setState(() => selectedTag = tag['name']);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('places')
@@ -74,11 +106,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     return Place.fromJson(data);
                   }).toList();
                   // Filter places by selected category
-                  final filtered = selectedCategoryId == 'all'
-                      ? allPlaces
-                      : allPlaces.where((p) => p.categoryId == selectedCategoryId).toList();
+                  final filtered = allPlaces.where((p) {
+                    // filter by category
+                    final matchesCategory = true;
+                    final matchesTag = selectedTag == 'All' || p.placeTag == selectedTag;
+                    return matchesCategory && matchesTag;
+                  }).toList();
+
                   // Prepare favorites list for horizontal display
-                  final favoritePlaces = allPlaces.where((place) => provider.favorites.contains(place.id)).toList();
+                  final favoritePlaces = allPlaces.where((place) {
+                    final isFavorite = provider.favorites.contains(place.id);
+                    final matchesTag = selectedTag == 'All' || place.placeTag == selectedTag;
+                    return isFavorite && matchesTag;
+                  }).toList();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -152,9 +192,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                         const SizedBox(height: 20),
                       ],
+                      if (filtered.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 6),
+                          child: Text(
+                            "Explore",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+
                       // Category selector and places list
-                      categorySelector(size),
-                      const DisplayTotalPrice(),
+                      //categorySelector(size),
                       const SizedBox(height: 10),
                       ...filtered.map((place) {
                         return GestureDetector(

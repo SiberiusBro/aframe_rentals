@@ -22,6 +22,14 @@ class AddPlaceScreen extends StatefulWidget {
 }
 
 class _AddPlaceScreenState extends State<AddPlaceScreen> {
+  final List<Map<String, dynamic>> tags = [
+    {'name': 'Beach', 'icon': Icons.beach_access},
+    {'name': 'Mountain', 'icon': Icons.terrain},
+    {'name': 'Rural', 'icon': Icons.grass},
+    {'name': 'Urban', 'icon': Icons.location_city},
+  ];
+  String? selectedTag;
+
   final _formKey = GlobalKey<FormState>();
 
   final titleController = TextEditingController();
@@ -99,7 +107,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   }
 
   Future<void> submitPlace() async {
-    if (!_formKey.currentState!.validate() || selectedImages.isEmpty || selectedLatLng == null) {
+    if (!_formKey.currentState!.validate() || selectedImages.isEmpty || selectedLatLng == null || selectedTag == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Fill all fields, pick images and location")),
       );
@@ -133,6 +141,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         'description': descriptionController.text,
         'beds': int.tryParse(bedsController.text) ?? 1,
         'bathrooms': int.tryParse(bathroomsController.text) ?? 1,
+        'placeTag': selectedTag,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,6 +247,28 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                   ))
                       .toList(),
                 ),
+              ),
+              const SizedBox(height: 16),
+              Text('Select a Tag', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: tags.map((tag) {
+                  return ChoiceChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(tag['icon'], size: 18),
+                        SizedBox(width: 6),
+                        Text(tag['name']),
+                      ],
+                    ),
+                    selected: selectedTag == tag['name'],
+                    onSelected: (_) {
+                      setState(() => selectedTag = tag['name']);
+                    },
+                  );
+                }).toList(),
               ),
               SwitchListTile(
                 title: const Text("Active Listing"),

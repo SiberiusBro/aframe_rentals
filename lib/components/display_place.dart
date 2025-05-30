@@ -57,6 +57,25 @@ class DisplayPlace extends StatelessWidget {
               children: [
                 Text(place.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(place.address),
+                if (place.placeTag != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Chip(
+                      label: Text(place.placeTag!),
+                      avatar: Icon(
+                        // Choose the correct icon based on tag
+                        place.placeTag == 'Beach'
+                            ? Icons.beach_access
+                            : place.placeTag == 'Mountain'
+                            ? Icons.terrain
+                            : place.placeTag == 'Rural'
+                            ? Icons.grass
+                            : Icons.location_city,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
                 Text("$priceDisplay/night"),
                 Text("⭐ $ratingStr (${place.review} $reviewLabel)"),
               ],
