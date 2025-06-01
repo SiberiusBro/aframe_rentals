@@ -1,4 +1,4 @@
-// services/user_service.dart
+//services/user_service.dart
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,13 +9,6 @@ class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// Saves or updates the current user's profile.
-  /// - name: required
-  /// - gender: required
-  /// - birthdate: required (DateTime)
-  /// - description: optional (empty string if null)
-  /// - userType: required ("host" or "guest")
-  /// - imageFile: optional, if provided we upload to Firebase Storage and update photoUrl.
   Future<void> saveUserProfile({
     required String name,
     required String gender,
@@ -35,10 +28,8 @@ class UserService {
       await _auth.currentUser!.updatePhotoURL(imageUrl);
     }
 
-    // 2) Update FirebaseAuth displayName (optional)
     await _auth.currentUser!.updateDisplayName(name);
 
-    // 3) Save to Firestore under "users/{uid}"
     await _firestore.collection('users').doc(uid).set({
       'name': name,
       'gender': gender,
@@ -49,7 +40,6 @@ class UserService {
     }, SetOptions(merge: true));
   }
 
-  /// Retrieves the current user's profile data from Firestore.
   Future<Map<String, dynamic>?> getCurrentUserProfile() async {
     final user = _auth.currentUser;
     if (user == null) return null;
@@ -57,7 +47,6 @@ class UserService {
     return doc.data();
   }
 
-  /// Retrieves any user's profile data by UID.
   Future<Map<String, dynamic>?> getUserProfileById(String uid) async {
     final doc = await _firestore.collection('users').doc(uid).get();
     return doc.exists ? doc.data() : null;

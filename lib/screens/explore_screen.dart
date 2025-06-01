@@ -1,3 +1,4 @@
+//screens/explore_screen.dart
 import 'package:aframe_rentals/screens/place_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

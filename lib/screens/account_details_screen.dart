@@ -1,4 +1,4 @@
-// screens/account_details_screen.dart
+//screens/account_details_screen.dart
 import 'package:aframe_rentals/models/place_model.dart';
 import 'package:aframe_rentals/screens/edit_place_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

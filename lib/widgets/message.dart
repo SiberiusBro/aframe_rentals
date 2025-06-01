@@ -1,3 +1,4 @@
+//widgets/message.dart
 class ChatMessage {
   final String senderId;
   final String text;

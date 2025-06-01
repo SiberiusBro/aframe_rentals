@@ -1,9 +1,11 @@
+//screens/edit_place_screen.dart
 import 'dart:io';
 import 'package:aframe_rentals/models/place_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class EditPlaceScreen extends StatefulWidget {
   final String placeId;
@@ -34,6 +36,10 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   ];
   late Map<String, bool> selectedFacilities;
 
+  Set<DateTime> _blockedDates = {};
+  Set<DateTime> _bookedDates = {};
+  bool _loadingBlocked = true;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +55,42 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
             ? true
             : false
     };
+    _loadBlockedAndBookedDates();
+  }
+
+  Future<void> _loadBlockedAndBookedDates() async {
+    // Load blocked (host custom) dates
+    final doc = await FirebaseFirestore.instance.collection('places').doc(widget.placeId).get();
+    Set<DateTime> blocks = {};
+    if (doc.exists && doc.data()!['blockedDates'] != null) {
+      for (var dateStr in (doc.data()!['blockedDates'] as List)) {
+        final parts = dateStr.split('-').map(int.parse).toList();
+        blocks.add(DateTime(parts[0], parts[1], parts[2]));
+      }
+    }
+
+    // Load booked dates (from reservations where status == accepted)
+    final resSnap = await FirebaseFirestore.instance
+        .collection('reservations')
+        .where('placeId', isEqualTo: widget.placeId)
+        .where('status', isEqualTo: 'accepted')
+        .get();
+
+    Set<DateTime> booked = {};
+    for (var doc in resSnap.docs) {
+      final data = doc.data();
+      DateTime start = DateTime.parse(data['startDate']);
+      DateTime end = DateTime.parse(data['endDate']);
+      for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1))) {
+        booked.add(DateTime(d.year, d.month, d.day));
+      }
+    }
+
+    setState(() {
+      _blockedDates = blocks;
+      _bookedDates = booked;
+      _loadingBlocked = false;
+    });
   }
 
   Future<void> pickImages() async {
@@ -95,6 +137,10 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
         'imageUrls': imageUrls,
         'image': imageUrls.first,
         'facilities': selectedFacilities,
+        'blockedDates': _blockedDates
+            .map((d) =>
+        "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}")
+            .toList(),
       });
 
       if (!mounted) return;
@@ -122,7 +168,9 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Place')),
-      body: Padding(
+      body: _loadingBlocked
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -195,7 +243,62 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
                       .toList(),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
+
+              // Calendar for host to block/unblock dates & see booked dates
+              const Text(
+                'Block/Unblock Dates (Unavailable for booking):',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              TableCalendar(
+                firstDay: DateTime.now(),
+                lastDay: DateTime.now().add(const Duration(days: 365)),
+                focusedDay: DateTime.now(),
+                calendarFormat: CalendarFormat.month,
+                selectedDayPredicate: (day) {
+                  final d = DateTime(day.year, day.month, day.day);
+                  return _blockedDates.contains(d);
+                },
+                enabledDayPredicate: (day) {
+                  final d = DateTime(day.year, day.month, day.day);
+                  // Host can toggle only if not booked
+                  return !_bookedDates.contains(d);
+                },
+                onDaySelected: (selectedDay, _) {
+                  final d = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+                  // Ignore clicks on booked dates!
+                  if (_bookedDates.contains(d)) return;
+                  setState(() {
+                    if (_blockedDates.contains(d)) {
+                      _blockedDates.remove(d);
+                    } else {
+                      _blockedDates.add(d);
+                    }
+                  });
+                },
+                calendarStyle: CalendarStyle(
+                  selectedDecoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  selectedTextStyle: const TextStyle(color: Colors.white),
+                  todayDecoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  weekendTextStyle: const TextStyle(color: Colors.black),
+                  outsideDaysVisible: false,
+                  // Booked dates: visually red and not selectable
+                  disabledDecoration: BoxDecoration(
+                    color: Colors.red.shade300,
+                    shape: BoxShape.circle,
+                  ),
+                  disabledTextStyle: const TextStyle(color: Colors.white),
+                ),
+              ),
+
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: isUploading ? null : updatePlace,
                 child: isUploading

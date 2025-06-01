@@ -1,3 +1,4 @@
+//models/place_model.dart
 class Place {
   final String? id;
   final String title;

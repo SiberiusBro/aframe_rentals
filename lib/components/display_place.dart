@@ -1,3 +1,4 @@
+//components/display_place.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/place_model.dart';

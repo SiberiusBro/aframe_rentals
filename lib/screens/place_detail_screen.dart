@@ -1,3 +1,4 @@
+//screens/place_detail_screen.dart
 import 'package:aframe_rentals/models/place_model.dart';
 import 'package:flutter/material.dart';
 import 'package:another_carousel_pro/another_carousel_pro.dart';

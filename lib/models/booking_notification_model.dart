@@ -1,3 +1,4 @@
+//models/booking_notification_model.dart
 class BookingNotification {
   final String title;
   final String body;

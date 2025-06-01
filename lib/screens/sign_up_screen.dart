@@ -1,3 +1,4 @@
+//screens/sign_up_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'verify_email_screen.dart';

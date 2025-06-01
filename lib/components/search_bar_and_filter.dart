@@ -1,3 +1,4 @@
+//components/search_bar_and_filter.dart
 import 'package:flutter/material.dart';
 
 class SearchBarAndFilter extends StatelessWidget {

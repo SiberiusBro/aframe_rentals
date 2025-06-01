@@ -1,3 +1,4 @@
+//main.dart
 import 'package:aframe_rentals/models/category.dart';
 import 'package:aframe_rentals/models/place_model.dart';
 import 'package:aframe_rentals/screens/account_details_screen.dart';

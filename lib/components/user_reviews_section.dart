@@ -1,5 +1,4 @@
-// STEP 5: Show received reviews on the user's profile
-
+//components/user_reviews_section.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../components/star_rating.dart';

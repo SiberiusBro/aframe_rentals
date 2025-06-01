@@ -1,4 +1,4 @@
-// At the top with other imports
+//screens/booking_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +19,51 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   DateTime _focusedDay = DateTime.now();
+  Set<DateTime> _unavailableDates = {};
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUnavailableDates();
+  }
+
+  Future<void> _fetchUnavailableDates() async {
+    final placeId = widget.place.id!;
+    Set<DateTime> blocked = {};
+
+    // Fetch accepted reservations
+    final resSnap = await FirebaseFirestore.instance
+        .collection('reservations')
+        .where('placeId', isEqualTo: placeId)
+        .where('status', isEqualTo: 'accepted')
+        .get();
+
+    for (var doc in resSnap.docs) {
+      final data = doc.data();
+      DateTime start = DateTime.parse(data['startDate']);
+      DateTime end = DateTime.parse(data['endDate']);
+      for (var d = start;
+      !d.isAfter(end);
+      d = d.add(const Duration(days: 1))) {
+        blocked.add(DateTime(d.year, d.month, d.day));
+      }
+    }
+
+    // Fetch blocked dates from place
+    final placeDoc = await FirebaseFirestore.instance.collection('places').doc(placeId).get();
+    if (placeDoc.exists && placeDoc.data()!['blockedDates'] != null) {
+      for (var dateStr in (placeDoc.data()!['blockedDates'] as List)) {
+        final parts = dateStr.split('-').map(int.parse).toList();
+        blocked.add(DateTime(parts[0], parts[1], parts[2]));
+      }
+    }
+
+    setState(() {
+      _unavailableDates = blocked;
+      _loading = false;
+    });
+  }
 
   int _calculateNights() {
     if (_startDate != null && _endDate != null) {
@@ -27,7 +72,6 @@ class _BookingScreenState extends State<BookingScreen> {
     return 0;
   }
 
-  // --- ADDED: Require user to be logged in AND have a profile before booking ---
   Future<bool> _canBook() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -38,7 +82,7 @@ class _BookingScreenState extends State<BookingScreen> {
     }
     final snap = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     final profile = snap.data();
-    if (profile == null || profile['name'] == null || profile['age'] == null || profile['gender'] == null) {
+    if (profile == null || profile['name'] == null || profile['birthdate'] == null || profile['gender'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete your profile before booking!')),
       );
@@ -49,7 +93,8 @@ class _BookingScreenState extends State<BookingScreen> {
 
   void _openPaymentMethodScreen() async {
     if (_startDate == null || _endDate == null) return;
-    if (!await _canBook()) return; // <--- Block if not allowed
+    if (!await _canBook()) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -62,10 +107,22 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
+  bool _isRangeAvailable(DateTime start, DateTime end) {
+    for (var d = start;
+    !d.isAfter(end);
+    d = d.add(const Duration(days: 1))) {
+      if (_unavailableDates.contains(DateTime(d.year, d.month, d.day))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final nights = _calculateNights();
     final totalPrice = nights * widget.place.price;
+
     Locale locale = Localizations.localeOf(context);
     String countryCode = locale.countryCode ?? 'US';
     String currencySymbol;
@@ -100,7 +157,9 @@ class _BookingScreenState extends State<BookingScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Select Dates')),
-      body: Column(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           TableCalendar(
             firstDay: DateTime.now(),
@@ -120,14 +179,28 @@ class _BookingScreenState extends State<BookingScreen> {
             onDaySelected: (selectedDay, _) {
               setState(() {
                 _focusedDay = selectedDay;
+                final today = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+
+                // If selecting new range or reset
                 if (_startDate == null || (_startDate != null && _endDate != null)) {
-                  _startDate = selectedDay;
-                  _endDate = null;
+                  if (!_unavailableDates.contains(today)) {
+                    _startDate = today;
+                    _endDate = null;
+                  }
                 } else if (selectedDay.isAfter(_startDate!)) {
-                  _endDate = selectedDay;
+                  // Only allow selecting an available range
+                  if (_isRangeAvailable(_startDate!, selectedDay)) {
+                    _endDate = selectedDay;
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Some dates in this range are already booked or blocked.")),
+                    );
+                  }
                 } else {
-                  _startDate = selectedDay;
-                  _endDate = null;
+                  if (!_unavailableDates.contains(today)) {
+                    _startDate = today;
+                    _endDate = null;
+                  }
                 }
               });
             },
@@ -142,7 +215,18 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               weekendTextStyle: const TextStyle(color: Colors.black),
               outsideDaysVisible: false,
+              // Mark unavailable (blocked or reserved) days
+              disabledTextStyle: TextStyle(color: Colors.red.shade200),
+              disabledDecoration: BoxDecoration(
+                color: Colors.red.shade100.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
             ),
+            enabledDayPredicate: (day) {
+              // Unavailable = booked or blocked
+              final d = DateTime(day.year, day.month, day.day);
+              return !_unavailableDates.contains(d);
+            },
           ),
           const SizedBox(height: 16),
           if (_startDate != null && _endDate != null)

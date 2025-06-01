@@ -1,3 +1,4 @@
+//screens/messages_screen.dart
 import 'package:aframe_rentals/screens/chat_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';

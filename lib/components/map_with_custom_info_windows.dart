@@ -1,3 +1,4 @@
+//components/map_with_custom_info_windows.dart
 import 'package:aframe_rentals/components/my_icon_button.dart';
 import 'package:another_carousel_pro/another_carousel_pro.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

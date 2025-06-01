@@ -1,3 +1,4 @@
+//components/star_rating.dart
 import 'package:flutter/material.dart';
 
 class StarRating extends StatefulWidget {
