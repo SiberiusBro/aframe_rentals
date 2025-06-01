@@ -23,6 +23,7 @@ class Place {
   final int? bathrooms;
   final String currency;
   final String? placeTag;
+  final Map<String, bool>? facilities;
 
   Place({
     this.id,
@@ -49,6 +50,7 @@ class Place {
     required this.bathrooms,
     required this.currency,
     required this.placeTag,
+    this.facilities,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
@@ -77,6 +79,9 @@ class Place {
       bathrooms: json['bathrooms'],
       currency: json['currency'] ?? 'RON',
       placeTag: json['placeTag'],
+      facilities: json['facilities'] != null
+          ? Map<String, bool>.from(json['facilities'])
+          : null,
     );
   }
 
@@ -106,6 +111,7 @@ class Place {
       'bathrooms': bathrooms,
       'currency': currency,
       'placeTag': placeTag,
+      'facilities': facilities,
     };
   }
 }

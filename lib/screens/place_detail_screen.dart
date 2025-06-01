@@ -6,7 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../components/review_prompt.dart';
 import '../components/star_rating.dart';
 import '../components/review_tile.dart';
-import 'booking_screen.dart'; // ✅ Required for navigation
+import 'booking_screen.dart';
+import 'package:provider/provider.dart';
+import '../services/the_provider.dart';
 
 class PlaceDetailScreen extends StatelessWidget {
   final Place place;
@@ -15,25 +17,42 @@ class PlaceDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final provider = TheProvider.of(context);
+    final isFav = provider.isFavorite(place.id!);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 120), // ✅ Fix for scroll
+          padding: const EdgeInsets.only(bottom: 120),
           children: [
-            // Carousel
-            SizedBox(
-              height: size.height * 0.35,
-              child: AnotherCarousel(
-                images: place.imageUrls.map((url) => NetworkImage(url)).toList(),
-                showIndicator: false,
-                dotBgColor: Colors.transparent,
-                boxFit: BoxFit.cover,
-              ),
+            Stack(
+              children: [
+                SizedBox(
+                  height: size.height * 0.35,
+                  child: AnotherCarousel(
+                    images: place.imageUrls.map((url) => NetworkImage(url)).toList(),
+                    showIndicator: false,
+                    dotBgColor: Colors.transparent,
+                    boxFit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 20,
+                  right: 20,
+                  child: IconButton(
+                    icon: Icon(
+                      isFav ? Icons.favorite : Icons.favorite_border,
+                      color: isFav ? Colors.red : Colors.white,
+                      size: 32,
+                    ),
+                    onPressed: () async {
+                      await provider.toggleFavoriteById(place.id!);
+                    },
+                  ),
+                ),
+              ],
             ),
-
-            // Details
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -61,8 +80,33 @@ class PlaceDetailScreen extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                   const SizedBox(height: 8),
                   Text(place.description ?? "No description available"),
-                  const Divider(height: 30),
 
+                  // Facilities section
+                  if (place.facilities != null && place.facilities!.containsValue(true)) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Facilities",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: place.facilities!.entries.where((e) => e.value).map((entry) {
+                        return Chip(
+                          label: Text(entry.key),
+                          avatar: Icon(
+                            entry.key == 'Wifi'
+                                ? Icons.wifi
+                                : entry.key == 'Room Temperature Control'
+                                ? Icons.thermostat
+                                : Icons.check,
+                            size: 16,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+
+                  const Divider(height: 30),
                   const Text("Location",
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                   const SizedBox(height: 8),
@@ -119,7 +163,6 @@ class PlaceDetailScreen extends StatelessWidget {
           ],
         ),
       ),
-
       bottomSheet: Container(
         height: size.height * 0.1,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -143,7 +186,6 @@ class PlaceDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             ElevatedButton(
               onPressed: () {
                 Navigator.push(

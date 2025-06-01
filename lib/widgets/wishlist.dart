@@ -21,17 +21,6 @@ class Wishlists extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    "Edit",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 35),
                 const Text(
                   "Wishlists",
@@ -49,91 +38,94 @@ class Wishlists extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 )
-                    : SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.68,
-                  child: GridView.builder(
-                    itemCount: favoriteItems.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
-                    itemBuilder: (context, index) {
-                      String favorite = favoriteItems[index];
-                      return FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance
-                            .collection('places')
-                            .doc(favorite)
-                            .get(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (!snapshot.hasData || snapshot.data == null) {
-                            return const Center(child: Text("Error loading favorites"));
-                          }
-                          final docSnap = snapshot.data!;
-                          final data = docSnap.data() as Map<String, dynamic>;
-                          data['id'] = docSnap.id;
-                          final place = Place.fromJson(data);
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => PlaceDetailScreen(place: place)),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(15),
-                              child: Stack(
-                                children: [
-                                  // image of favorite item
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(15),
-                                      image: DecorationImage(
-                                        fit: BoxFit.cover,
-                                        image: NetworkImage(place.image),
-                                      ),
-                                    ),
-                                  ),
-                                  // favorite icon in the top right corner
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.favorite, color: Colors.red),
-                                      onPressed: () {
-                                        provider.toggleFavorite(docSnap);
-                                      },
-                                    ),
-                                  ),
-                                  // title of favorite item
-                                  Positioned(
-                                    bottom: 8,
-                                    left: 8,
-                                    right: 8,
-                                    child: Container(
-                                      color: Colors.black.withOpacity(0.6),
-                                      padding: const EdgeInsets.all(4),
-                                      child: Text(
-                                        place.title,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                    : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: favoriteItems.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: favoriteItems.length == 1 ? 1 : 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 1,
                   ),
+                  itemBuilder: (context, index) {
+                    String favorite = favoriteItems[index];
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('places')
+                          .doc(favorite)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (!snapshot.hasData || snapshot.data == null) {
+                          return const SizedBox.shrink();
+                        }
+                        final docSnap = snapshot.data!;
+                        if (docSnap.data() == null) {
+                          return const SizedBox.shrink();
+                        }
+                        final data = docSnap.data() as Map<String, dynamic>;
+                        data['id'] = docSnap.id;
+                        final place = Place.fromJson(data);
+
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PlaceDetailScreen(place: place),
+                              ),
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    image: DecorationImage(
+                                      fit: BoxFit.cover,
+                                      image: NetworkImage(place.image),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.favorite, color: Colors.red),
+                                    onPressed: () async {
+                                      await provider.toggleFavoriteById(docSnap.id);
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  left: 8,
+                                  right: 8,
+                                  child: Container(
+                                    color: Colors.black.withOpacity(0.6),
+                                    padding: const EdgeInsets.all(4),
+                                    child: Text(
+                                      place.title,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ],
             ),

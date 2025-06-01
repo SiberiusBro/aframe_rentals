@@ -122,7 +122,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (provider.favorites.isNotEmpty) ...[
+                      if (favoritePlaces.isNotEmpty) ...[
                         const SizedBox(height: 15),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 15.0),
@@ -140,7 +140,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             itemBuilder: (context, index) {
                               final favPlace = favoritePlaces[index];
                               return Padding(
-                                padding: EdgeInsets.only(left: index == 0 ? 15 : 10, right: index == favoritePlaces.length - 1 ? 15 : 0),
+                                padding: EdgeInsets.only(
+                                  left: index == 0 ? 15 : 10,
+                                  right: index == favoritePlaces.length - 1 ? 15 : 0,
+                                ),
                                 child: GestureDetector(
                                   onTap: () {
                                     Navigator.push(
@@ -152,7 +155,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     borderRadius: BorderRadius.circular(15),
                                     child: Stack(
                                       children: [
-                                        // Favorite place image
                                         SizedBox(
                                           width: size.width * 0.6,
                                           child: Image.network(
@@ -160,13 +162,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                             fit: BoxFit.cover,
                                           ),
                                         ),
-                                        // Favorite icon at top-right
                                         const Positioned(
                                           top: 8,
                                           right: 8,
                                           child: Icon(Icons.favorite, color: Colors.red),
                                         ),
-                                        // Title at bottom overlay
                                         Positioned(
                                           bottom: 8,
                                           left: 8,
@@ -176,7 +176,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                             padding: const EdgeInsets.all(4),
                                             child: Text(
                                               favPlace.title,
-                                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                                              style: const TextStyle(
+                                                  color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),

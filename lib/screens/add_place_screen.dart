@@ -22,6 +22,16 @@ class AddPlaceScreen extends StatefulWidget {
 }
 
 class _AddPlaceScreenState extends State<AddPlaceScreen> {
+  final List<Map<String, dynamic>> facilityOptions = [
+    {'label': 'Wifi', 'icon': Icons.wifi},
+    {'label': 'Room Temperature Control', 'icon': Icons.thermostat},
+    // Add more as needed
+  ];
+
+  Map<String, bool> selectedFacilities = {
+    'Wifi': false,
+    'Room Temperature Control': false,
+  };
   final List<Map<String, dynamic>> tags = [
     {'name': 'Beach', 'icon': Icons.beach_access},
     {'name': 'Mountain', 'icon': Icons.terrain},
@@ -142,6 +152,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         'beds': int.tryParse(bedsController.text) ?? 1,
         'bathrooms': int.tryParse(bathroomsController.text) ?? 1,
         'placeTag': selectedTag,
+        'facilities': selectedFacilities,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -266,6 +277,32 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                     selected: selectedTag == tag['name'],
                     onSelected: (_) {
                       setState(() => selectedTag = tag['name']);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              ExpansionTile(
+                title: const Text(
+                  'Extra Features+',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                children: facilityOptions.map((facility) {
+                  final label = facility['label'] as String;
+                  final icon = facility['icon'] as IconData;
+                  return SwitchListTile(
+                    title: Row(
+                      children: [
+                        Icon(icon, size: 20),
+                        const SizedBox(width: 8),
+                        Text(label),
+                      ],
+                    ),
+                    value: selectedFacilities[label] ?? false,
+                    onChanged: (val) {
+                      setState(() {
+                        selectedFacilities[label] = val;
+                      });
                     },
                   );
                 }).toList(),

@@ -27,6 +27,13 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   List<File> newImages = [];
   bool isUploading = false;
 
+  final List<Map<String, dynamic>> facilityOptions = [
+    {'label': 'Wifi', 'icon': Icons.wifi},
+    {'label': 'Room Temperature Control', 'icon': Icons.thermostat},
+    // Add more as needed
+  ];
+  late Map<String, bool> selectedFacilities;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +42,13 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
     descriptionController = TextEditingController(text: widget.place.description ?? '');
     bedsController = TextEditingController(text: widget.place.beds?.toString() ?? '');
     bathroomsController = TextEditingController(text: widget.place.bathrooms?.toString() ?? '');
+    selectedFacilities = {
+      for (var facility in facilityOptions)
+        facility['label'] as String:
+        widget.place.facilities != null && widget.place.facilities![facility['label']] == true
+            ? true
+            : false
+    };
   }
 
   Future<void> pickImages() async {
@@ -80,6 +94,7 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
         'bathrooms': int.tryParse(bathroomsController.text) ?? 1,
         'imageUrls': imageUrls,
         'image': imageUrls.first,
+        'facilities': selectedFacilities,
       });
 
       if (!mounted) return;
@@ -137,6 +152,32 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
                 controller: bathroomsController,
                 decoration: const InputDecoration(labelText: "Bathrooms"),
                 keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              ExpansionTile(
+                title: const Text(
+                  'Extra Features+',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                children: facilityOptions.map((facility) {
+                  final label = facility['label'] as String;
+                  final icon = facility['icon'] as IconData;
+                  return SwitchListTile(
+                    title: Row(
+                      children: [
+                        Icon(icon, size: 20),
+                        const SizedBox(width: 8),
+                        Text(label),
+                      ],
+                    ),
+                    value: selectedFacilities[label] ?? false,
+                    onChanged: (val) {
+                      setState(() {
+                        selectedFacilities[label] = val;
+                      });
+                    },
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(

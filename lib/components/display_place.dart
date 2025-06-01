@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/place_model.dart';
+import 'package:provider/provider.dart';
+import '../services/the_provider.dart';
 
 class DisplayPlace extends StatelessWidget {
   final Place place;
@@ -8,7 +10,6 @@ class DisplayPlace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine currency symbol or code for current locale
     Locale locale = Localizations.localeOf(context);
     String countryCode = locale.countryCode ?? 'US';
     String currencySymbol;
@@ -18,12 +19,31 @@ class DisplayPlace extends StatelessWidget {
       currencySymbol = '£';
     } else if (countryCode == 'US' || countryCode == 'AU' || countryCode == 'CA' || countryCode == 'NZ') {
       currencySymbol = '\$';
-    } else if (['AT','BE','CY','EE','FI','FR','DE','GR','IE','IT','LV','LT','LU','MT','NL','PT','SK','SI','ES'].contains(countryCode)) {
+    } else if ([
+      'AT',
+      'BE',
+      'CY',
+      'EE',
+      'FI',
+      'FR',
+      'DE',
+      'GR',
+      'IE',
+      'IT',
+      'LV',
+      'LT',
+      'LU',
+      'MT',
+      'NL',
+      'PT',
+      'SK',
+      'SI',
+      'ES'
+    ].contains(countryCode)) {
       currencySymbol = '€';
     } else {
       currencySymbol = NumberFormat.simpleCurrency(locale: locale.toString()).currencySymbol;
     }
-    // Format price value
     String priceStr = place.price.toString();
     if (priceStr.endsWith('.0')) {
       priceStr = priceStr.substring(0, priceStr.length - 2);
@@ -36,7 +56,6 @@ class DisplayPlace extends StatelessWidget {
     } else {
       priceDisplay = "$currencySymbol$priceStr";
     }
-    // Format rating and review count
     double displayRating = place.rating;
     if (place.review == 0) {
       displayRating = 0.0;
@@ -44,12 +63,33 @@ class DisplayPlace extends StatelessWidget {
     String ratingStr = displayRating.toStringAsFixed(1);
     final String reviewLabel = place.review == 1 ? "review" : "reviews";
 
+    // Use provider for wishlist logic
+    final provider = TheProvider.of(context);
+    final isFav = provider.isFavorite(place.id!);
+
     return Card(
       margin: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image.network(place.imageUrls.first, fit: BoxFit.cover),
+          Stack(
+            children: [
+              Image.network(place.imageUrls.first, fit: BoxFit.cover, width: double.infinity, height: 180),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? Colors.red : Colors.grey,
+                  ),
+                  onPressed: () async {
+                    await provider.toggleFavoriteById(place.id!);
+                  },
+                ),
+              ),
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
@@ -63,7 +103,6 @@ class DisplayPlace extends StatelessWidget {
                     child: Chip(
                       label: Text(place.placeTag!),
                       avatar: Icon(
-                        // Choose the correct icon based on tag
                         place.placeTag == 'Beach'
                             ? Icons.beach_access
                             : place.placeTag == 'Mountain'
@@ -76,6 +115,24 @@ class DisplayPlace extends StatelessWidget {
                     ),
                   ),
                 ],
+                // Facilities chips
+                if (place.facilities != null && place.facilities!.containsValue(true))
+                  Wrap(
+                    spacing: 6,
+                    children: place.facilities!.entries.where((e) => e.value).map((entry) {
+                      return Chip(
+                        label: Text(entry.key),
+                        avatar: Icon(
+                          entry.key == 'Wifi'
+                              ? Icons.wifi
+                              : entry.key == 'Room Temperature Control'
+                              ? Icons.thermostat
+                              : Icons.check,
+                          size: 16,
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 Text("$priceDisplay/night"),
                 Text("⭐ $ratingStr (${place.review} $reviewLabel)"),
               ],
