@@ -9,7 +9,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:aframe_rentals/screens/location_picker_screen.dart';
-import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 
 LatLng? selectedLatLng;
@@ -117,6 +116,22 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   }
 
   Future<void> submitPlace() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You must be logged in.")),
+      );
+      return;
+    }
+    final snap = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final profile = snap.data();
+    if (profile == null || profile['name'] == null || profile['birthdate'] == null || profile['gender'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please complete your profile before listing a place!")),
+      );
+      return;
+    }
+    // --- Continue with previous validations and add listing logic ---
     if (!_formKey.currentState!.validate() || selectedImages.isEmpty || selectedLatLng == null || selectedTag == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Fill all fields, pick images and location")),

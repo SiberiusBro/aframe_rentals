@@ -1,41 +1,72 @@
-// screens/complete_profile_screen.dart
 import 'dart:io';
-import 'package:aframe_rentals/screens/home_screen.dart';
-import 'package:aframe_rentals/services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class CompleteProfileScreen extends StatefulWidget {
-  const CompleteProfileScreen({super.key});
+class EditProfileScreen extends StatefulWidget {
+  const EditProfileScreen({super.key});
 
   @override
-  State<CompleteProfileScreen> createState() => _CompleteProfileScreenState();
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
+class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _name;
-  String? _gender = 'Male';
+  final _nameController = TextEditingController();
+  final _descController = TextEditingController();
+
+  String? _gender;
   DateTime? _birthDate;
-  String? _description;
-  String? _userType; // "host" or "guest"
-  File? _selectedImage;
-  bool _isSaving = false;
+  String? _photoUrl;
+  File? _newImageFile;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentProfile();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCurrentProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (!doc.exists) return;
+    final data = doc.data()!;
+    setState(() {
+      _nameController.text = data['name'] ?? '';
+      _descController.text = data['description'] ?? '';
+      _gender = data['gender'] as String?;
+      _photoUrl = data['photoUrl'] as String?;
+      if (data['birthdate'] != null) {
+        _birthDate = (data['birthdate'] as Timestamp).toDate();
+      }
+    });
+  }
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker()
         .pickImage(source: ImageSource.gallery, imageQuality: 75);
     if (picked != null) {
       setState(() {
-        _selectedImage = File(picked.path);
+        _newImageFile = File(picked.path);
       });
     }
   }
 
   Future<void> _pickBirthDate() async {
     final now = DateTime.now();
-    final initial = DateTime(now.year - 20, now.month, now.day);
+    final initial = _birthDate ?? DateTime(now.year - 20, now.month, now.day);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -49,84 +80,93 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     }
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _birthDate == null || _userType == null) {
+  Future<String?> _uploadAvatar(File imageFile, String uid) async {
+    final ref = FirebaseStorage.instance.ref().child('user_avatars/$uid.jpg');
+    await ref.putFile(imageFile);
+    return await ref.getDownloadURL();
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate() || _birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all required fields')),
       );
       return;
     }
+
     setState(() {
-      _isSaving = true;
+      _isLoading = true;
     });
 
-    try {
-      // Call UserService to save:
-      await UserService().saveUserProfile(
-        name: _name!.trim(),
-        gender: _gender!,
-        birthdate: _birthDate!,
-        description: _description?.trim(),
-        userType: _userType!,
-        imageFile: _selectedImage,
-      );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+    String? imageUrl = _photoUrl;
 
-      // Once saved, navigate to HomeScreen (or wherever is appropriate)
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving profile: $e')),
-      );
-      setState(() {
-        _isSaving = false;
-      });
+    // Upload new avatar if selected
+    if (_newImageFile != null) {
+      imageUrl = await _uploadAvatar(_newImageFile!, uid);
+      await user.updatePhotoURL(imageUrl);
     }
+
+    // Update display name in FirebaseAuth
+    final newName = _nameController.text.trim();
+    await user.updateDisplayName(newName);
+
+    // Write to Firestore
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'name': newName,
+      'gender': _gender,
+      'birthdate': Timestamp.fromDate(_birthDate!),
+      'description': _descController.text.trim(),
+      'photoUrl': imageUrl,
+    }, SetOptions(merge: true));
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+    Navigator.pop(context, 'refresh');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Complete Your Profile')),
-      body: Padding(
+      appBar: AppBar(title: const Text('Edit Profile')),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: _isSaving
-            ? const Center(child: CircularProgressIndicator())
-            : Form(
+        child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
             children: [
-              // Avatar picker
+              // Avatar picker / preview
               Center(
                 child: GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                    backgroundImage: _newImageFile != null
+                        ? FileImage(_newImageFile!)
+                        : (_photoUrl != null && _photoUrl!.isNotEmpty
+                        ? NetworkImage(_photoUrl!)
+                        : const AssetImage('assets/images/default_avatar.png')
+                    ) as ImageProvider,
                   ),
                 ),
               ),
               const SizedBox(height: 8),
-              const Center(
-                child: Text(
-                  'Tap to add a profile picture',
-                  style: TextStyle(color: Colors.black54),
-                ),
-              ),
+              const Text('Tap avatar to change', style: TextStyle(color: Colors.black54)),
               const SizedBox(height: 20),
 
               // Name
               TextFormField(
+                controller: _nameController,
                 decoration: const InputDecoration(
                   labelText: 'Name *',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (v) => _name = v,
                 validator: (v) =>
                 (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
@@ -134,11 +174,11 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
               // Gender
               DropdownButtonFormField<String>(
+                value: _gender,
                 decoration: const InputDecoration(
                   labelText: 'Gender *',
                   border: OutlineInputBorder(),
                 ),
-                value: _gender,
                 items: const [
                   DropdownMenuItem(value: 'Male', child: Text('Male')),
                   DropdownMenuItem(value: 'Female', child: Text('Female')),
@@ -184,34 +224,18 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
               // Description (optional)
               TextFormField(
+                controller: _descController,
                 decoration: const InputDecoration(
                   labelText: 'Description (optional)',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
-                onChanged: (v) => _description = v,
-              ),
-              const SizedBox(height: 16),
-
-              // Account type
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Account Type *',
-                  border: OutlineInputBorder(),
-                ),
-                value: _userType,
-                items: const [
-                  DropdownMenuItem(value: 'host', child: Text('Host')),
-                  DropdownMenuItem(value: 'guest', child: Text('Guest')),
-                ],
-                onChanged: (v) => setState(() => _userType = v),
-                validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 32),
 
               ElevatedButton(
-                onPressed: _submit,
-                child: const Text('Finish'),
+                onPressed: _saveProfile,
+                child: const Text('Save Changes'),
                 style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
               ),
             ],

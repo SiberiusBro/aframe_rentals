@@ -1,3 +1,4 @@
+// services/user_service.dart
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,41 +9,57 @@ class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  /// Saves or updates the current user's profile.
+  /// - name: required
+  /// - gender: required
+  /// - birthdate: required (DateTime)
+  /// - description: optional (empty string if null)
+  /// - userType: required ("host" or "guest")
+  /// - imageFile: optional, if provided we upload to Firebase Storage and update photoUrl.
   Future<void> saveUserProfile({
     required String name,
-    required int age,
     required String gender,
+    required DateTime birthdate,
+    required String userType,
+    String? description,
     File? imageFile,
   }) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    String? imageUrl;
+    final uid = _auth.currentUser!.uid;
+    String? imageUrl = _auth.currentUser!.photoURL;
 
+    // 1) Upload avatar if provided:
     if (imageFile != null) {
-      final ref = FirebaseStorage.instance.ref().child('user_avatars/$uid.jpg');
+      final ref = _storage.ref().child('user_avatars/$uid.jpg');
       await ref.putFile(imageFile);
       imageUrl = await ref.getDownloadURL();
-
-      // 🔥 Update FirebaseAuth photoURL
-      await FirebaseAuth.instance.currentUser!.updatePhotoURL(imageUrl);
+      await _auth.currentUser!.updatePhotoURL(imageUrl);
     }
 
-    // 🔥 Update FirebaseAuth displayName
-    await FirebaseAuth.instance.currentUser!.updateDisplayName(name);
+    // 2) Update FirebaseAuth displayName (optional)
+    await _auth.currentUser!.updateDisplayName(name);
 
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+    // 3) Save to Firestore under "users/{uid}"
+    await _firestore.collection('users').doc(uid).set({
       'name': name,
-      'age': age,
       'gender': gender,
-      'photoUrl': imageUrl ?? FirebaseAuth.instance.currentUser!.photoURL,
+      'birthdate': Timestamp.fromDate(birthdate),
+      'description': description ?? '',
+      'userType': userType,
+      'photoUrl': imageUrl,
     }, SetOptions(merge: true));
   }
 
-
-  Future<Map<String, dynamic>?> getUserProfile() async {
+  /// Retrieves the current user's profile data from Firestore.
+  Future<Map<String, dynamic>?> getCurrentUserProfile() async {
     final user = _auth.currentUser;
     if (user == null) return null;
-
     final doc = await _firestore.collection('users').doc(user.uid).get();
     return doc.data();
+  }
+
+  /// Retrieves any user's profile data by UID.
+  Future<Map<String, dynamic>?> getUserProfileById(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    return doc.exists ? doc.data() : null;
   }
 }

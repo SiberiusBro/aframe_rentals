@@ -9,6 +9,7 @@ import '../components/review_tile.dart';
 import 'booking_screen.dart';
 import 'package:provider/provider.dart';
 import '../services/the_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PlaceDetailScreen extends StatelessWidget {
   final Place place;
@@ -75,13 +76,10 @@ class PlaceDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 30),
-
                   const Text("About this place",
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                   const SizedBox(height: 8),
                   Text(place.description ?? "No description available"),
-
-                  // Facilities section
                   if (place.facilities != null && place.facilities!.containsValue(true)) ...[
                     const SizedBox(height: 16),
                     const Text(
@@ -105,7 +103,6 @@ class PlaceDetailScreen extends StatelessWidget {
                       }).toList(),
                     ),
                   ],
-
                   const Divider(height: 30),
                   const Text("Location",
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
@@ -119,15 +116,12 @@ class PlaceDetailScreen extends StatelessWidget {
                       longitude: place.longitude,
                     ),
                   ),
-
                   const Divider(height: 30),
                   ReviewPrompt(place: place),
                   const Divider(height: 30),
-
                   const Text("Reviews",
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                   const SizedBox(height: 8),
-
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('reviews')
@@ -138,12 +132,10 @@ class PlaceDetailScreen extends StatelessWidget {
                       if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
                       }
-
                       final reviews = snapshot.data!.docs;
                       if (reviews.isEmpty) {
                         return const Text("No reviews yet.");
                       }
-
                       return Column(
                         children: reviews.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
@@ -163,47 +155,65 @@ class PlaceDetailScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomSheet: Container(
-        height: size.height * 0.1,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.black12)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            RichText(
-              text: TextSpan(
-                text: "\$${place.price} ",
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18),
-                children: const [
-                  TextSpan(
-                    text: "night",
-                    style: TextStyle(fontWeight: FontWeight.normal, color: Colors.black),
-                  )
-                ],
-              ),
+      // Reserve button only for guests!
+      bottomSheet: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseAuth.instance.currentUser != null
+            ? FirebaseFirestore.instance
+            .collection('users')
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .get()
+            : Future.value(null),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || snapshot.data == null || !snapshot.data!.exists) {
+            return const SizedBox.shrink();
+          }
+          final userType = snapshot.data!.get('userType');
+          if (userType == 'host') {
+            return const SizedBox.shrink();
+          }
+          return Container(
+            height: size.height * 0.1,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.black12)),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BookingScreen(place: place),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    text: "\$${place.price} ",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18),
+                    children: const [
+                      TextSpan(
+                        text: "night",
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Colors.black),
+                      )
+                    ],
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text("Reserve"),
-            )
-          ],
-        ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookingScreen(place: place),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("Reserve"),
+                )
+              ],
+            ),
+          );
+        },
       ),
     );
   }

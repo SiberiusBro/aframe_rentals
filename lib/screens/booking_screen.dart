@@ -1,10 +1,11 @@
+// At the top with other imports
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../models/place_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'payment_method_screen.dart';  // New import for the payment selection screen
+import 'payment_method_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   final Place place;
@@ -26,9 +27,29 @@ class _BookingScreenState extends State<BookingScreen> {
     return 0;
   }
 
-  // Navigate to the payment method screen for card/cash selection and payment
-  void _openPaymentMethodScreen() {
+  // --- ADDED: Require user to be logged in AND have a profile before booking ---
+  Future<bool> _canBook() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to book.')),
+      );
+      return false;
+    }
+    final snap = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final profile = snap.data();
+    if (profile == null || profile['name'] == null || profile['age'] == null || profile['gender'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please complete your profile before booking!')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  void _openPaymentMethodScreen() async {
     if (_startDate == null || _endDate == null) return;
+    if (!await _canBook()) return; // <--- Block if not allowed
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -45,7 +66,6 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget build(BuildContext context) {
     final nights = _calculateNights();
     final totalPrice = nights * widget.place.price;
-    // Format currency for display (add currency symbol or code based on locale)
     Locale locale = Localizations.localeOf(context);
     String countryCode = locale.countryCode ?? 'US';
     String currencySymbol;
@@ -62,13 +82,9 @@ class _BookingScreenState extends State<BookingScreen> {
       currencySymbol = NumberFormat.simpleCurrency(locale: locale.toString()).currencySymbol;
     }
     String unitPriceStr = widget.place.price.toString();
-    if (unitPriceStr.endsWith('.0')) {
-      unitPriceStr = unitPriceStr.substring(0, unitPriceStr.length - 2);
-    }
+    if (unitPriceStr.endsWith('.0')) unitPriceStr = unitPriceStr.substring(0, unitPriceStr.length - 2);
     String totalStr = totalPrice.toString();
-    if (totalStr.endsWith('.0')) {
-      totalStr = totalStr.substring(0, totalStr.length - 2);
-    }
+    if (totalStr.endsWith('.0')) totalStr = totalStr.substring(0, totalStr.length - 2);
     late String unitDisplay;
     late String totalDisplay;
     if (countryCode == 'RO') {
@@ -105,14 +121,11 @@ class _BookingScreenState extends State<BookingScreen> {
               setState(() {
                 _focusedDay = selectedDay;
                 if (_startDate == null || (_startDate != null && _endDate != null)) {
-                  // Selecting a new start date (or reselecting after a full range)
                   _startDate = selectedDay;
                   _endDate = null;
                 } else if (selectedDay.isAfter(_startDate!)) {
-                  // Selecting the end date
                   _endDate = selectedDay;
                 } else {
-                  // Reset if a new start date is selected before the current start
                   _startDate = selectedDay;
                   _endDate = null;
                 }

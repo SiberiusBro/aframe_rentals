@@ -2,6 +2,7 @@ import 'package:aframe_rentals/models/category.dart';
 import 'package:aframe_rentals/models/place_model.dart';
 import 'package:aframe_rentals/screens/account_details_screen.dart';
 import 'package:aframe_rentals/screens/complete_profile_screen.dart';
+import 'package:aframe_rentals/screens/edit_profile_screen.dart';
 import 'package:aframe_rentals/screens/forgot_password_screen.dart';
 import 'package:aframe_rentals/screens/home_screen.dart';
 import 'package:aframe_rentals/screens/login_screen.dart';
@@ -78,7 +79,7 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/': (context) => LoginScreen(),
           '/account-details': (context) => const AccountDetailsScreen(),
-          '/edit-profile': (context) {
+          '/user-profile': (context) {
             final user = FirebaseAuth.instance.currentUser;
             return UserProfileScreen(userId: user?.uid ?? '');
           },
@@ -88,6 +89,7 @@ class _MyAppState extends State<MyApp> {
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/signup': (context) => const SignUpScreen(),
           '/notifications': (context) => const NotificationsScreen(),
+          '/edit-profile': (_) => const EditProfileScreen(),
         },
       ),
     );
