@@ -114,6 +114,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             future: FirebaseFirestore.instance
                 .collection('reviews')
                 .where('targetUserId', isEqualTo: widget.userId)
+                .orderBy('timestamp', descending: true)
                 .get(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -127,7 +128,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Reviews:',
+                    'Reviews as Host:',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 8),
@@ -135,14 +136,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     final data = doc.data() as Map<String, dynamic>;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(data['reviewerName'] ?? 'Someone'),
+                      title: Text(data['guestName'] ?? 'Someone'),
                       subtitle: Text(data['comment'] ?? ''),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(
                           5,
                               (i) => Icon(
-                            i < ((data['stars'] ?? 0) as int)
+                            i < ((data['rating'] ?? 0) as double).round()
                                 ? Icons.star
                                 : Icons.star_border,
                             size: 20,

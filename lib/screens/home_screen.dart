@@ -2,15 +2,11 @@
 import 'package:aframe_rentals/screens/messages_screen.dart';
 import 'package:aframe_rentals/screens/profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:aframe_rentals/services/the_provider.dart';
-
+import '../services/trip_host_selector.dart';
 import '../widgets/wishlist.dart';
 import 'explore_screen.dart';
-import 'chat_screen.dart';
-import 'login_screen.dart';
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -29,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     page = [
       const ExploreScreen(),
       const Wishlists(),
-      const Scaffold(), // Trip placeholder
+      const TripSelectorScreen(),
       const MessagesScreen(),
       const ProfilePage(),
     ];

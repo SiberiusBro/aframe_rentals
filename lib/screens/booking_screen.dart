@@ -169,8 +169,8 @@ class _BookingScreenState extends State<BookingScreen> {
             calendarFormat: CalendarFormat.month,
             selectedDayPredicate: (day) {
               if (_startDate != null && _endDate != null) {
-                return day.isAfter(_startDate!.subtract(const Duration(days: 1))) &&
-                    day.isBefore(_endDate!.add(const Duration(days: 1)));
+                // This line is FIXED to only highlight days from start to end inclusive!
+                return !day.isBefore(_startDate!) && !day.isAfter(_endDate!);
               } else if (_startDate != null && _endDate == null) {
                 return isSameDay(day, _startDate!);
               }

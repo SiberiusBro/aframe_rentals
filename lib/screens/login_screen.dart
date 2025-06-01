@@ -1,12 +1,13 @@
-//screens/login_screen.dart
 import 'package:aframe_rentals/screens/forgot_password_screen.dart';
 import 'package:aframe_rentals/screens/home_screen.dart';
 import 'package:aframe_rentals/screens/sign_up_screen.dart';
 import 'package:aframe_rentals/screens/verify_email_screen.dart';
 import 'package:aframe_rentals/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:shared_preferences/shared_preferences.dart'; // Uncomment if you want
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool keepLoggedIn = true; // Step 7: default to true
 
   void togglePasswordVisibility() {
     setState(() => _obscurePassword = !_obscurePassword);
@@ -80,6 +82,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 10),
 
+                // Keep Me Logged In Checkbox
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: keepLoggedIn,
+                  title: const Text("Keep me logged in"),
+                  onChanged: (val) {
+                    setState(() => keepLoggedIn = val ?? true);
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+
                 // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
@@ -110,6 +123,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                       return;
                     }
+
+                    // --- Step 7: Persistence ---
+                    if (kIsWeb) {
+                      await FirebaseAuth.instance.setPersistence(
+                        keepLoggedIn
+                            ? Persistence.LOCAL
+                            : Persistence.SESSION,
+                      );
+                    }
+                    // else on mobile, Firebase is persistent by default
+
+                    // // If you want to store the choice for simulation:
+                    // final prefs = await SharedPreferences.getInstance();
+                    // prefs.setBool('keepLoggedIn', keepLoggedIn);
 
                     User? user = await FirebaseAuthServices()
                         .signInWithEmailAndPassword(email, password);
@@ -150,6 +177,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Google Login
                 InkWell(
                   onTap: () async {
+                    // --- Step 7: Persistence ---
+                    if (kIsWeb) {
+                      await FirebaseAuth.instance.setPersistence(
+                        keepLoggedIn
+                            ? Persistence.LOCAL
+                            : Persistence.SESSION,
+                      );
+                    }
+                    // // If you want to store the choice for simulation:
+                    // final prefs = await SharedPreferences.getInstance();
+                    // prefs.setBool('keepLoggedIn', keepLoggedIn);
+
                     await FirebaseAuthServices().signInWithGoogle();
                     Navigator.pushReplacement(
                       context,

@@ -1,8 +1,10 @@
-//screens/booking_request_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'chat_screen.dart'; // <-- import your chat screen here
+import '../services/cloud_notification_service.dart';
+import 'chat_screen.dart';
+import 'user_profile_screen.dart';
+
 
 class BookingRequestDetailScreen extends StatefulWidget {
   final String reservationId;
@@ -22,6 +24,8 @@ class BookingRequestDetailScreen extends StatefulWidget {
 
 class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen> {
   Map<String, dynamic>? requesterProfile;
+  bool _accepting = false;
+  bool _declining = false;
 
   @override
   void initState() {
@@ -38,14 +42,172 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
     }
   }
 
-  Future<void> _updateReservationStatus(String status) async {
+  String _generateChatId(String hostId, String guestId, String placeId) {
+    final ids = [hostId, guestId]..sort();
+    return '${ids[0]}_${ids[1]}_$placeId';
+  }
+
+  Future<String> _ensureChatExists() async {
+    final hostId = widget.reservationData['ownerId'];
+    final guestId = widget.requesterId;
+    final placeId = widget.reservationData['placeId'];
+    final chatId = _generateChatId(hostId, guestId, placeId);
+
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
+    final chatSnap = await chatRef.get();
+    if (!chatSnap.exists) {
+      await chatRef.set({
+        'participants': [hostId, guestId],
+        'placeId': placeId,
+        'lastMessage': '',
+        'lastMessageTime': null,
+        'unreadCount_$hostId': 0,
+        'unreadCount_$guestId': 0,
+      });
+    }
+    return chatId;
+  }
+
+  Future<void> _acceptReservationAndCreateChatAndOpen() async {
+    setState(() => _accepting = true);
+
     await FirebaseFirestore.instance
         .collection('reservations')
         .doc(widget.reservationId)
-        .update({'status': status});
+        .update({'status': 'accepted'});
+
+    await _ensureChatExists();
+
+    setState(() => _accepting = false);
 
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Reservation $status')));
+    final guestId = widget.requesterId;
+    final placeId = widget.reservationData['placeId'];
+    Future.delayed(const Duration(milliseconds: 350), () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            otherUserId: guestId,
+            placeId: placeId,
+          ),
+        ),
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reservation accepted. Chat created!')),
+    );
+  }
+
+  Future<void> _declineReservationWithReason() async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String? selectedReason;
+        TextEditingController descriptionController = TextEditingController();
+        List<String> reasons = [
+          "Double booking",
+          "Dates unavailable",
+          "Other"
+        ];
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text("Decline Booking"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ...reasons.map((reason) => RadioListTile<String>(
+                  value: reason,
+                  groupValue: selectedReason,
+                  title: Text(reason),
+                  onChanged: (value) => setState(() => selectedReason = value),
+                )),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    hintText: "Add more details (optional)",
+                  ),
+                  minLines: 1,
+                  maxLines: 2,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text("Decline"),
+                onPressed: () async {
+                  if (selectedReason == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Pick a reason.")),
+                    );
+                    return;
+                  }
+                  Navigator.of(context).pop();
+                  await _doDecline(selectedReason!, descriptionController.text.trim());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _doDecline(String reason, String description) async {
+    setState(() => _declining = true);
+    // 1. Update reservation in Firestore
+    await FirebaseFirestore.instance
+        .collection('reservations')
+        .doc(widget.reservationId)
+        .update({
+      'status': 'declined',
+      'declineReason': reason,
+      'declineDescription': description,
+    });
+
+    // 2. Get guest's device token
+    final userSnap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.requesterId)
+        .get();
+    final guestToken = userSnap.data()?['deviceToken'];
+
+    // 3. Send FCM notification
+    if (guestToken != null && guestToken is String && guestToken.isNotEmpty) {
+      await CloudNotificationService.sendNotification(
+        token: guestToken,
+        title: "Booking Declined",
+        body: "Reason: $reason${description.isNotEmpty ? "\n$description" : ""}",
+      );
+    }
+
+    setState(() => _declining = false);
+
+    Navigator.of(context).pop();
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reservation declined. Guest notified.')));
+  }
+
+  Future<void> _openChat() async {
+    final hostId = widget.reservationData['ownerId'];
+    final guestId = widget.requesterId;
+    final placeId = widget.reservationData['placeId'];
+    await _ensureChatExists();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          otherUserId: guestId,
+          placeId: placeId,
+        ),
+      ),
+    );
   }
 
   @override
@@ -62,14 +224,81 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
         child: ListView(
           children: [
             Text(
-              "Place: ${res['placeTitle']}",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              res['placeTitle'] ?? "",
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
             const SizedBox(height: 8),
-            Text("Requested by: ${res['userName']}"),
+
+// "Booking request:" label
+            const Text(
+              "Booking request:",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black54,
+              ),
+            ),
+
+// The oval user chip (as in previous message)
             if (requesterProfile != null) ...[
-              Text("User Email: ${requesterProfile!['email'] ?? '-'}"),
-              // Add any other user info you want here
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => UserProfileScreen(userId: widget.requesterId),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 10, top: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.grey.shade400, width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundImage: (requesterProfile!['photoUrl'] != null &&
+                            requesterProfile!['photoUrl'].toString().isNotEmpty)
+                            ? NetworkImage(requesterProfile!['photoUrl'])
+                            : null,
+                        backgroundColor: Colors.grey.shade300,
+                        child: (requesterProfile!['photoUrl'] == null ||
+                            requesterProfile!['photoUrl'].toString().isEmpty)
+                            ? Text(
+                          (requesterProfile!['name'] ?? '')
+                              .toString()
+                              .isNotEmpty
+                              ? requesterProfile!['name'][0].toUpperCase()
+                              : "?",
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+                        )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        requesterProfile!['name'] ?? "Unknown",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (requesterProfile != null) ...[
+              Text("Payment Method: ${res['paymentMethod'] ?? '-'}"),
               const SizedBox(height: 8),
             ],
             Text("From: $startDateFormatted"),
@@ -85,49 +314,38 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
                     : Colors.orange,
               ),
             ),
+            if (status == 'declined' && res['declineReason'] != null) ...[
+              const SizedBox(height: 12),
+              Text("Decline Reason: ${res['declineReason']}", style: const TextStyle(color: Colors.red)),
+              if (res['declineDescription'] != null && res['declineDescription'].toString().isNotEmpty)
+                Text("More info: ${res['declineDescription']}", style: const TextStyle(color: Colors.red)),
+            ],
             const SizedBox(height: 24),
             Row(
               children: [
                 ElevatedButton.icon(
                   icon: const Icon(Icons.chat),
                   label: const Text("Chat"),
-                  onPressed: () {
-                    final placeId = widget.reservationData['placeId'];
-                    final userId = widget.requesterId;
-
-                    // Debug log: print values to console
-                    debugPrint('Chat button pressed. placeId: $placeId, userId: $userId');
-
-                    if (placeId == null || placeId is! String || placeId.isEmpty ||
-                        userId == null || userId is! String || userId.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Chat information is missing or invalid.")),
-                      );
-                      return;
-                    }
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(
-                          otherUserId: userId,
-                          placeId: placeId,
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _openChat,
                 ),
                 const SizedBox(width: 12),
                 if (status == 'pending') ...[
                   ElevatedButton(
-                    child: const Text("Accept"),
+                    child: _accepting
+                        ? const SizedBox(
+                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text("Accept"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                    onPressed: () => _updateReservationStatus('accepted'),
+                    onPressed: _accepting ? null : _acceptReservationAndCreateChatAndOpen,
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    child: const Text("Decline"),
+                    child: _declining
+                        ? const SizedBox(
+                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text("Decline"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    onPressed: () => _updateReservationStatus('declined'),
+                    onPressed: _declining ? null : _declineReservationWithReason,
                   ),
                 ],
               ],

@@ -1,10 +1,12 @@
-//screens/profile_page.dart
+// screens/profile_page.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:aframe_rentals/screens/add_place_screen.dart';
 import 'package:aframe_rentals/screens/account_details_screen.dart';
 import 'package:aframe_rentals/screens/notifications_screen.dart';
 import 'package:aframe_rentals/screens/user_profile_screen.dart';
+import 'package:aframe_rentals/screens/payments_screen.dart'; // <-- Import this
+import 'package:aframe_rentals/screens/payouts_screen.dart';  // <-- And this
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
@@ -248,7 +250,22 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: profileInfo(Icons.person_2_outlined, "Personal information"),
                     ),
                     profileInfo(Icons.security, "Login & security"),
-                    profileInfo(Icons.payments_outlined, "Payments and payouts"),
+                    GestureDetector(
+                      onTap: () async {
+                        // Dynamically fetch userType on tap for real-time role changes
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        if (uid != null) {
+                          final snap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                          final type = snap.data()?['userType'] ?? 'guest';
+                          if (type == 'host') {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const PayoutsScreen()));
+                          } else {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentsScreen()));
+                          }
+                        }
+                      },
+                      child: profileInfo(Icons.payments_outlined, "Payments and payouts"),
+                    ),
                     profileInfo(Icons.settings_outlined, "Accessibility"),
                     profileInfo(Icons.note_outlined, "Taxes"),
                     profileInfo(Icons.translate, "Translation"),
@@ -281,14 +298,41 @@ class _ProfilePageState extends State<ProfilePage> {
                     profileInfo(Icons.menu_book_outlined, "Privacy Policy"),
                     profileInfo(Icons.menu_book_outlined, "Open source licenses"),
                     const SizedBox(height: 10),
-                    const Text(
-                      "Log out",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.black,
+                    GestureDetector(
+                      onTap: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Confirm Logout'),
+                            content: const Text('Are you sure you want to log out?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Log out'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+                        }
+                      },
+                      child: const Text(
+                        "Log out",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.black,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),

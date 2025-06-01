@@ -84,7 +84,9 @@ class NotificationsScreen extends StatelessWidget {
                       ),
                       title: Text("$name wants to book $placeTitle"),
                       subtitle: Text(
-                        "$startDate → $endDate\nStatus: ${status[0].toUpperCase()}${status.substring(1)}",
+                          "$startDate → $endDate\nStatus: ${status[0].toUpperCase()}${status.substring(1)}"
+                              "${status == 'declined' && data['declineReason'] != null ? "\nDecline Reason: ${data['declineReason']}" : ""}"
+                              "${status == 'declined' && data['declineDescription'] != null && data['declineDescription'].toString().isNotEmpty ? "\nMore info: ${data['declineDescription']}" : ""}"
                       ),
                       isThreeLine: true,
                       onTap: () {
@@ -130,13 +132,27 @@ class NotificationsScreen extends StatelessWidget {
                       subtitle: Text("$startDate → $endDate\nStatus: ${status[0].toUpperCase()}${status.substring(1)}"),
                       isThreeLine: true,
                       onTap: () {
-                        // Open chat with the host of this reservation
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ChatScreen(otherUserId: ownerId, placeId: data['placeId']),
-                          ),
-                        );
+                        if ((data['status'] ?? '') == 'accepted') {
+                          // Open chat with the host
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(otherUserId: ownerId, placeId: data['placeId']),
+                            ),
+                          );
+                        } else {
+                          // Open details screen for declined or other status
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BookingRequestDetailScreen(
+                                reservationId: doc.id,
+                                requesterId: uid,
+                                reservationData: data,
+                              ),
+                            ),
+                          );
+                        }
                       },
                     ),
                   );

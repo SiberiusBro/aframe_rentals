@@ -1,13 +1,13 @@
-//models/review_model.dart
 class Review {
-  final String? id; // ✅ Optional
+  final String? id;
   final String placeId;
-  final String userId;
+  final String userId;         // who wrote the review
   final String userName;
-  final String? userProfilePic; // ✅ Optional
+  final String? userProfilePic;
   final String comment;
   final double rating;
   final DateTime timestamp;
+  final String targetUserId;   // the user being reviewed (host or guest)
 
   Review({
     this.id,
@@ -18,6 +18,7 @@ class Review {
     required this.comment,
     required this.rating,
     required this.timestamp,
+    required this.targetUserId,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +30,7 @@ class Review {
       'comment': comment,
       'rating': rating,
       'timestamp': timestamp.toIso8601String(),
+      'targetUserId': targetUserId,
     };
   }
 
@@ -42,6 +44,7 @@ class Review {
       comment: json['comment'],
       rating: (json['rating'] as num).toDouble(),
       timestamp: DateTime.parse(json['timestamp']),
+      targetUserId: json['targetUserId'],
     );
   }
 }

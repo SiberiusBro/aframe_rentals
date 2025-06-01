@@ -1,8 +1,6 @@
-//components/user_reviews_section.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../components/star_rating.dart';
-import '../models/review_model.dart';
 
 class UserReviewsSection extends StatelessWidget {
   final String userId;
@@ -13,7 +11,7 @@ class UserReviewsSection extends StatelessWidget {
     return FutureBuilder<QuerySnapshot>(
       future: FirebaseFirestore.instance
           .collection('reviews')
-          .where('userId', isEqualTo: userId)
+          .where('targetUserId', isEqualTo: userId) // <--- change is here
           .orderBy('timestamp', descending: true)
           .get(),
       builder: (context, snapshot) {

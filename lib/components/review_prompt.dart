@@ -1,4 +1,3 @@
-//components/review_prompt.dart
 import 'package:aframe_rentals/models/place_model.dart';
 import 'package:aframe_rentals/models/review_model.dart';
 import 'package:aframe_rentals/components/star_rating.dart';
@@ -59,14 +58,20 @@ class _ReviewPromptState extends State<ReviewPrompt> {
 
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     final name = userDoc['name'] ?? 'Anonymous';
+    final profilePic = userDoc['photoUrl'] ?? '';
+
+    // Set host as targetUserId (assuming Place.vendor == host UID)
+    final hostUid = widget.place.vendor; // Use .ownerId if that's the field!
 
     final review = Review(
       placeId: widget.place.id!,
       userId: user.uid,
       userName: name,
+      userProfilePic: profilePic,
       comment: _controller.text.trim(),
       rating: _rating,
       timestamp: DateTime.now(),
+      targetUserId: hostUid,
     );
 
     await FirebaseFirestore.instance.collection('reviews').add(review.toJson());
