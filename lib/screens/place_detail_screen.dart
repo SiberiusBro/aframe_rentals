@@ -127,6 +127,7 @@ class PlaceDetailScreen extends StatelessWidget {
                     stream: FirebaseFirestore.instance
                         .collection('reviews')
                         .where('placeId', isEqualTo: place.id)
+                        .where('type', isEqualTo: 'place') // <--- ONLY place reviews
                         .orderBy('timestamp', descending: true)
                         .snapshots(),
                     builder: (context, snapshot) {
@@ -145,6 +146,7 @@ class PlaceDetailScreen extends StatelessWidget {
                             comment: data['comment'] ?? '',
                             rating: (data['rating'] ?? 0).toDouble(),
                             timestamp: DateTime.tryParse(data['timestamp'] ?? '') ?? DateTime.now(),
+                            userProfilePic: data['userProfilePic'],
                           );
                         }).toList(),
                       );

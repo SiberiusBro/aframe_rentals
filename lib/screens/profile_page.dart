@@ -5,14 +5,15 @@ import 'package:aframe_rentals/screens/add_place_screen.dart';
 import 'package:aframe_rentals/screens/account_details_screen.dart';
 import 'package:aframe_rentals/screens/notifications_screen.dart';
 import 'package:aframe_rentals/screens/user_profile_screen.dart';
-import 'package:aframe_rentals/screens/payments_screen.dart'; // <-- Import this
-import 'package:aframe_rentals/screens/payouts_screen.dart';  // <-- And this
+import 'package:aframe_rentals/screens/payments_screen.dart';
+import 'package:aframe_rentals/screens/payouts_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
+import 'login_security_screen.dart';
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
-
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
@@ -249,10 +250,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       },
                       child: profileInfo(Icons.person_2_outlined, "Personal information"),
                     ),
-                    profileInfo(Icons.security, "Login & security"),
                     GestureDetector(
+                      onTap: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => const LoginSecurityScreen())
+                        );
+                      },
+                      child: profileInfo(Icons.security, "Login & security"),
+                    ),                    GestureDetector(
                       onTap: () async {
-                        // Dynamically fetch userType on tap for real-time role changes
                         final uid = FirebaseAuth.instance.currentUser?.uid;
                         if (uid != null) {
                           final snap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
@@ -266,12 +272,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       },
                       child: profileInfo(Icons.payments_outlined, "Payments and payouts"),
                     ),
-                    profileInfo(Icons.settings_outlined, "Accessibility"),
-                    profileInfo(Icons.note_outlined, "Taxes"),
-                    profileInfo(Icons.translate, "Translation"),
-                    profileInfo(Icons.notifications_outlined, "Notifications"),
-                    profileInfo(Icons.lock_outline, "Privacy and sharing"),
-                    if (userType == 'guest') profileInfo(Icons.card_travel, "Travel for work"),
+                    // --- Remove or comment these for now ---
+                    // profileInfo(Icons.settings_outlined, "Accessibility"),
+                    // profileInfo(Icons.note_outlined, "Taxes"),
+                    // profileInfo(Icons.translate, "Translation"),
+                    // profileInfo(Icons.notifications_outlined, "Notifications"),
+                    // profileInfo(Icons.lock_outline, "Privacy and sharing"),
+                    // if (userType == 'guest') profileInfo(Icons.card_travel, "Travel for work"),
                     const SizedBox(height: 15),
                     if (userType == 'host') ...[
                       const Text("Hosting", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),
@@ -284,19 +291,20 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       profileInfo(Icons.home_outlined, "Learn about hosting"),
                     ],
-                    const SizedBox(height: 15),
-                    const Text("Support", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),
-                    const SizedBox(height: 25),
-                    profileInfo(Icons.help_outline, "Visit the Help Center"),
-                    profileInfo(Icons.health_and_safety_outlined, "Get help with a safety issue"),
-                    profileInfo(Icons.ac_unit, "How StayFinder works"),
-                    profileInfo(Icons.edit_outlined, "Give us feedback"),
-                    const SizedBox(height: 15),
-                    const Text("Legal", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),
-                    const SizedBox(height: 25),
-                    profileInfo(Icons.menu_book_outlined, "Terms of Service"),
-                    profileInfo(Icons.menu_book_outlined, "Privacy Policy"),
-                    profileInfo(Icons.menu_book_outlined, "Open source licenses"),
+                    // --- Support & Legal removed for now ---
+                    // const SizedBox(height: 15),
+                    // const Text("Support", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),
+                    // const SizedBox(height: 25),
+                    // profileInfo(Icons.help_outline, "Visit the Help Center"),
+                    // profileInfo(Icons.health_and_safety_outlined, "Get help with a safety issue"),
+                    // profileInfo(Icons.ac_unit, "How StayFinder works"),
+                    // profileInfo(Icons.edit_outlined, "Give us feedback"),
+                    // const SizedBox(height: 15),
+                    // const Text("Legal", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),
+                    // const SizedBox(height: 25),
+                    // profileInfo(Icons.menu_book_outlined, "Terms of Service"),
+                    // profileInfo(Icons.menu_book_outlined, "Privacy Policy"),
+                    // profileInfo(Icons.menu_book_outlined, "Open source licenses"),
                     const SizedBox(height: 10),
                     GestureDetector(
                       onTap: () async {

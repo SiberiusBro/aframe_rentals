@@ -22,20 +22,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
     {'name': 'Rural', 'icon': Icons.grass},
     {'name': 'Urban', 'icon': Icons.location_city},
   ];
-  String? selectedTag = 'All';
+  String selectedTag = 'All';
   List<Category> categories = [];
   String? selectedCategoryId;
-  String searchQuery = '';
-  double minPrice = 0;
-  double maxPrice = 2000;
-  double minReview = 0;
-  double maxReview = 5;
-  bool filtersActive = false;
 
+  // Search and Filters
+  String searchQuery = '';
   double filterMinPrice = 0;
   double filterMaxPrice = 2000;
   double filterMinReview = 0;
   double filterMaxReview = 5;
+  bool filtersActive = false;
 
   @override
   void initState() {
@@ -59,41 +56,65 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void openFilterDialog() {
+    double tempMinPrice = filterMinPrice;
+    double tempMaxPrice = filterMaxPrice;
+    double tempMinReview = filterMinReview;
+    double tempMaxReview = filterMaxReview;
+
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        double tempMinPrice = filterMinPrice;
-        double tempMaxPrice = filterMaxPrice;
-        double tempMinReview = filterMinReview;
-        double tempMaxReview = filterMaxReview;
         return StatefulBuilder(
-          builder: (context, setState) => Padding(
+          builder: (context, setStateDialog) => Padding(
             padding: const EdgeInsets.all(18.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Filters", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        "Filters",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
+                ),
                 const SizedBox(height: 10),
-                const Text("Price Range"),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Price Range"),
+                ),
                 RangeSlider(
                   min: 0,
                   max: 2000,
                   divisions: 20,
                   labels: RangeLabels("${tempMinPrice.toInt()}", "${tempMaxPrice.toInt()}"),
                   values: RangeValues(tempMinPrice, tempMaxPrice),
-                  onChanged: (v) => setState(() {
+                  onChanged: (v) => setStateDialog(() {
                     tempMinPrice = v.start;
                     tempMaxPrice = v.end;
                   }),
                 ),
-                const Text("Review Range"),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Review Range"),
+                ),
                 RangeSlider(
                   min: 0,
                   max: 5,
                   divisions: 5,
-                  labels: RangeLabels("${tempMinReview.toStringAsFixed(1)}", "${tempMaxReview.toStringAsFixed(1)}"),
+                  labels: RangeLabels(
+                      "${tempMinReview.toStringAsFixed(1)}", "${tempMaxReview.toStringAsFixed(1)}"),
                   values: RangeValues(tempMinReview, tempMaxReview),
-                  onChanged: (v) => setState(() {
+                  onChanged: (v) => setStateDialog(() {
                     tempMinReview = v.start;
                     tempMaxReview = v.end;
                   }),
@@ -102,7 +123,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   children: [
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
                         setState(() {
                           filterMinPrice = 0;
                           filterMaxPrice = 2000;
@@ -110,6 +130,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           filterMaxReview = 5;
                           filtersActive = false;
                         });
+                        Navigator.pop(context);
                       },
                       child: const Text("Clear All"),
                     ),
@@ -149,7 +170,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // SEARCH BAR
+              // SEARCH BAR + FILTER
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Row(
@@ -174,14 +195,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           color: filtersActive ? Colors.blueAccent : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(Icons.filter_list,
-                            color: filtersActive ? Colors.white : Colors.black54, size: 28),
+                        child: Icon(
+                          filtersActive ? Icons.filter_alt : Icons.filter_list,
+                          color: filtersActive ? Colors.white : Colors.black54,
+                          size: 28,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              const Divider(height: 2, color: Colors.black12),
               // TAGS
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -207,6 +231,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   }).toList(),
                 ),
               ),
+              // Optional: Show active filters summary
+              if (filtersActive)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                  child: Row(
+                    children: [
+                      if (filterMinPrice != 0 || filterMaxPrice != 2000)
+                        Text("Price: ${filterMinPrice.toInt()} - ${filterMaxPrice.toInt()}", style: const TextStyle(fontSize: 13)),
+                      if (filterMinReview != 0 || filterMaxReview != 5)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Text("Rating: ${filterMinReview.toStringAsFixed(1)}+", style: const TextStyle(fontSize: 13)),
+                        ),
+                    ],
+                  ),
+                ),
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('places')
@@ -225,7 +265,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     return Place.fromJson(data);
                   }).toList();
 
-                  // Apply Search
+                  // Apply Search & Filters
                   List<Place> filtered = allPlaces.where((p) {
                     final matchesTag = selectedTag == 'All' || p.placeTag == selectedTag;
                     final matchesSearch = searchQuery.isEmpty
@@ -332,8 +372,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                       ],
 
-                      // Category selector and places list
-                      //categorySelector(size),
                       const SizedBox(height: 10),
                       ...filtered.map((place) {
                         return GestureDetector(

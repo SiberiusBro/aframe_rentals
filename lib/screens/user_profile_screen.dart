@@ -1,6 +1,8 @@
 //screens/user_profile_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -128,28 +130,57 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Reviews as Host:',
+                    'Reviews:',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 8),
                   ...reviews.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
+                    final reviewerPic = (data['userProfilePic'] != null && (data['userProfilePic'] as String).isNotEmpty)
+                        ? NetworkImage(data['userProfilePic'])
+                        : const AssetImage('assets/images/default_avatar.png') as ImageProvider;
+
+                    // Parse date safely
+                    DateTime? date;
+                    try {
+                      date = DateTime.parse(data['timestamp']);
+                    } catch (e) {
+                      date = DateTime.now();
+                    }
+
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(data['guestName'] ?? 'Someone'),
-                      subtitle: Text(data['comment'] ?? ''),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                          5,
-                              (i) => Icon(
-                            i < ((data['rating'] ?? 0) as double).round()
-                                ? Icons.star
-                                : Icons.star_border,
-                            size: 20,
-                            color: Colors.amber,
+                      leading: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Colors.black12,
+                        backgroundImage: reviewerPic,
+                      ),
+                      title: Text(
+                        data['userName'] ?? 'Someone',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: List.generate(
+                              5,
+                                  (i) => Icon(
+                                i < ((data['rating'] ?? 0) as num).round()
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                size: 20,
+                                color: Colors.amber,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 2),
+                          Text(data['comment'] ?? ''),
+                          Text(
+                            date != null ? DateFormat('yMMMd').format(date) : '',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),

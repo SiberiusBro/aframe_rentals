@@ -80,11 +80,24 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
 
     setState(() => _accepting = false);
 
-    Navigator.of(context).pop();
+    // Save values before pop
     final guestId = widget.requesterId;
     final placeId = widget.reservationData['placeId'];
+
+    // 1. Pop and wait for navigation to finish
+    if (mounted) Navigator.of(context).pop();
+
+    // 2. Use a global navigator key or root context, or use a callback from parent
+
+    // For simplicity: push to chat after pop using the root navigator context
+    // (Assuming you're returning to a parent screen that can call push to ChatScreen.)
+    // Otherwise, you can use a callback or pass a BuildContext down from the parent.
+
+    // One safe workaround:
     Future.delayed(const Duration(milliseconds: 350), () {
-      Navigator.of(context).push(
+      // Find a valid context (like using a globalKey), or just let parent handle push
+      // Here's the quick workaround with root navigator:
+      Navigator.of(context, rootNavigator: true).push(
         MaterialPageRoute(
           builder: (_) => ChatScreen(
             otherUserId: guestId,
@@ -94,9 +107,9 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
       );
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Reservation accepted. Chat created!')),
-    );
+    // Optionally, also use a root context for Snackbar:
+    // (or move the snackbar to the parent screen)
+    // ScaffoldMessenger.of(context, rootNavigator: true).showSnackBar(...)
   }
 
   Future<void> _declineReservationWithReason() async {

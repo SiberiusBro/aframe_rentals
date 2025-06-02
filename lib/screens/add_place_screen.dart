@@ -163,7 +163,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         'image': imageUrls.first,
         'vendorProfession': 'Host',
         'vendorProfile': '',
-        'userId': userId,
+        'ownerId': userId, // <<< THIS IS NOW CORRECT
         'description': descriptionController.text,
         'beds': int.tryParse(bedsController.text) ?? 1,
         'bathrooms': int.tryParse(bathroomsController.text) ?? 1,
