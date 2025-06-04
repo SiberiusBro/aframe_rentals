@@ -132,7 +132,6 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       );
       return;
     }
-    // --- Continue with previous validations and add listing logic ---
     if (!_formKey.currentState!.validate() || selectedImages.isEmpty || selectedLatLng == null || selectedTag == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Fill all fields, pick images and location")),
@@ -163,7 +162,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         'image': imageUrls.first,
         'vendorProfession': 'Host',
         'vendorProfile': '',
-        'ownerId': userId, // <<< THIS IS NOW CORRECT
+        'ownerId': userId,
         'description': descriptionController.text,
         'beds': int.tryParse(bedsController.text) ?? 1,
         'bathrooms': int.tryParse(bathroomsController.text) ?? 1,

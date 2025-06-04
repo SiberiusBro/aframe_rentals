@@ -23,12 +23,12 @@ class CloudNotificationService {
       );
 
       if (response.statusCode == 200) {
-        print('✅ Notification sent via Cloud Function!');
+        print('Notification sent via Cloud Function!');
       } else {
-        print('❌ Failed to send notification: ${response.body}');
+        print('Failed to send notification: ${response.body}');
       }
     } catch (e) {
-      print('🔥 Error calling Cloud Function: $e');
+      print('Error calling Cloud Function: $e');
     }
   }
 }

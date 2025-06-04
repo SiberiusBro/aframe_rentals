@@ -6,19 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class TheProvider extends ChangeNotifier {
-  // Favorite place IDs for the current user
   List<String> _favoriteIds = [];
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
   List<String> get favorites => _favoriteIds;
 
   TheProvider() {
-    // Load favorites for the current user (if any)
     if (FirebaseAuth.instance.currentUser != null) {
       loadFavorite();
     }
   }
 
-  // Toggle a place's favorite state for the current user
   Future<void> toggleFavoriteById(String placeId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -50,17 +47,14 @@ class TheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // (Optional) Toggle favorites using a DocumentSnapshot (for compatibility)
   Future<void> toggleFavorite(DocumentSnapshot place) async {
     await toggleFavoriteById(place.id);
   }
 
-  // Check if a place is favorited by the current user
   bool isFavorite(String placeId) {
     return _favoriteIds.contains(placeId);
   }
 
-  // Load favorite place IDs for the current user from Firestore
   Future<void> loadFavorite() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -83,7 +77,6 @@ class TheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Static helper to easily access the provider
   static TheProvider of(BuildContext context, {bool listen = true}) {
     return Provider.of<TheProvider>(context, listen: listen);
   }

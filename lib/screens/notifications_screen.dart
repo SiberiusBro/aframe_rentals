@@ -122,7 +122,6 @@ class NotificationsScreen extends StatelessWidget {
                   final endDate = DateFormat('yMMMd').format(DateTime.parse(data['endDate']));
                   final ownerId = data['ownerId'];
                   final status = data['status'] ?? '';
-                  // Determine icon based on status
                   final iconData = status == 'accepted' ? Icons.check_circle : Icons.cancel;
                   final iconColor = status == 'accepted' ? Colors.green : Colors.red;
                   notificationWidgets.add(
@@ -133,7 +132,6 @@ class NotificationsScreen extends StatelessWidget {
                       isThreeLine: true,
                       onTap: () {
                         if ((data['status'] ?? '') == 'accepted') {
-                          // Open chat with the host
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -141,7 +139,6 @@ class NotificationsScreen extends StatelessWidget {
                             ),
                           );
                         } else {
-                          // Open details screen for declined or other status
                           Navigator.push(
                             context,
                             MaterialPageRoute(

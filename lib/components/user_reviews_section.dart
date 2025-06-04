@@ -11,7 +11,7 @@ class UserReviewsSection extends StatelessWidget {
     return FutureBuilder<QuerySnapshot>(
       future: FirebaseFirestore.instance
           .collection('reviews')
-          .where('targetUserId', isEqualTo: userId) // <--- change is here
+          .where('targetUserId', isEqualTo: userId)
           .orderBy('timestamp', descending: true)
           .get(),
       builder: (context, snapshot) {

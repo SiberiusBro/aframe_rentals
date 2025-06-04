@@ -32,7 +32,6 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   final List<Map<String, dynamic>> facilityOptions = [
     {'label': 'Wifi', 'icon': Icons.wifi},
     {'label': 'Room Temperature Control', 'icon': Icons.thermostat},
-    // Add more as needed
   ];
   late Map<String, bool> selectedFacilities;
 
@@ -59,7 +58,6 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
   }
 
   Future<void> _loadBlockedAndBookedDates() async {
-    // Load blocked (host custom) dates
     final doc = await FirebaseFirestore.instance.collection('places').doc(widget.placeId).get();
     Set<DateTime> blocks = {};
     if (doc.exists && doc.data()!['blockedDates'] != null) {
@@ -69,7 +67,6 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
       }
     }
 
-    // Load booked dates (from reservations where status == accepted)
     final resSnap = await FirebaseFirestore.instance
         .collection('reservations')
         .where('placeId', isEqualTo: widget.placeId)
@@ -245,7 +242,6 @@ class _EditPlaceScreenState extends State<EditPlaceScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Calendar for host to block/unblock dates & see booked dates
               const Text(
                 'Block/Unblock Dates (Unavailable for booking):',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

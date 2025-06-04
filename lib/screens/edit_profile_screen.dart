@@ -110,11 +110,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await user.updatePhotoURL(imageUrl);
     }
 
-    // Update display name in FirebaseAuth
     final newName = _nameController.text.trim();
     await user.updateDisplayName(newName);
 
-    // Write to Firestore
     await FirebaseFirestore.instance.collection('users').doc(uid).set({
       'name': newName,
       'gender': _gender,

@@ -3,11 +3,13 @@ import 'package:aframe_rentals/screens/home_screen.dart';
 import 'package:aframe_rentals/screens/sign_up_screen.dart';
 import 'package:aframe_rentals/screens/verify_email_screen.dart';
 import 'package:aframe_rentals/services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-// import 'package:shared_preferences/shared_preferences.dart'; // Uncomment if you want
+
+import 'complete_profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -132,11 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             : Persistence.SESSION,
                       );
                     }
-                    // else on mobile, Firebase is persistent by default
-
-                    // // If you want to store the choice for simulation:
-                    // final prefs = await SharedPreferences.getInstance();
-                    // prefs.setBool('keepLoggedIn', keepLoggedIn);
 
                     User? user = await FirebaseAuthServices()
                         .signInWithEmailAndPassword(email, password);
@@ -174,10 +171,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Google Login
                 InkWell(
                   onTap: () async {
-                    // --- Step 7: Persistence ---
                     if (kIsWeb) {
                       await FirebaseAuth.instance.setPersistence(
                         keepLoggedIn
@@ -185,15 +180,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             : Persistence.SESSION,
                       );
                     }
-                    // // If you want to store the choice for simulation:
-                    // final prefs = await SharedPreferences.getInstance();
-                    // prefs.setBool('keepLoggedIn', keepLoggedIn);
-
-                    await FirebaseAuthServices().signInWithGoogle();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
-                    );
+                    final user = await FirebaseAuthServices().signInWithGoogle();
+                    if (user != null) {
+                      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                      if (doc.exists && (doc.data()?['userType'] ?? '').toString().isNotEmpty) {
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CompleteProfileScreen(
+                              initialName: user.displayName,
+                              initialEmail: user.email,
+                              initialPhotoUrl: user.photoURL,
+                              isGoogleSignIn: true,
+                            ),
+                          ),
+                        );
+                      }
+                    }
                   },
                   child: socialIcons(
                     size,

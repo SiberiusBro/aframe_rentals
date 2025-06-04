@@ -7,7 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
-  const CompleteProfileScreen({super.key});
+  final String? initialName;
+  final String? initialEmail;
+  final String? initialPhotoUrl;
+  final bool isGoogleSignIn;
+
+  const CompleteProfileScreen({
+    super.key,
+    this.initialName,
+    this.initialEmail,
+    this.initialPhotoUrl,
+    this.isGoogleSignIn = false,
+  });
 
   @override
   State<CompleteProfileScreen> createState() => _CompleteProfileScreenState();
@@ -22,6 +33,15 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   String? _userType; // "host" or "guest"
   File? _selectedImage;
   bool _isSaving = false;
+  String? _photoUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = widget.initialName;
+    _photoUrl = widget.initialPhotoUrl;
+    // (Optional) For future: parse age from Google if available
+  }
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker()
@@ -61,7 +81,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     });
 
     try {
-      // Call UserService to save:
       await UserService().saveUserProfile(
         name: _name!.trim(),
         gender: _gender!,
@@ -71,7 +90,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         imageFile: _selectedImage,
       );
 
-      // Once saved, navigate to HomeScreen (or wherever is appropriate)
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -99,7 +117,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // Avatar picker
               Center(
                 child: GestureDetector(
                   onTap: _pickImage,

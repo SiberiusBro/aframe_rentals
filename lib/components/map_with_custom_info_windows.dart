@@ -164,7 +164,6 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                     InkWell(
                       onTap: () async {
                         await provider.toggleFavoriteById(placeId);
-                        // Refresh the info window to update the heart icon
                         _customInfoWindowController.addInfoWindow!(
                           _buildInfoWindow(data, placeId, position, size),
                           position,
@@ -314,7 +313,6 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                     width: size.width * 0.85,
                     offset: 50,
                   ),
-                  // Drag indicator / close area
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Padding(

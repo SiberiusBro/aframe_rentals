@@ -58,12 +58,10 @@ class _MyAppState extends State<MyApp> {
     await FirebaseMessaging.instance.requestPermission();
     final fcmToken = await FirebaseMessaging.instance.getToken();
     debugPrint("FCM Token: $fcmToken");
-    // TODO: Save the FCM token to Firestore under the current user document
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         debugPrint('Foreground Notification: ${message.notification!.title}');
-        // Optionally show a dialog/snackbar
       }
     });
   }

@@ -15,6 +15,6 @@ class DeviceTokenService {
 
     await userDoc.set({
       'deviceToken': token,
-    }, SetOptions(merge: true)); // merges token without overwriting other user data
+    }, SetOptions(merge: true));
   }
 }

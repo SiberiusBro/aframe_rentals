@@ -7,21 +7,22 @@ class FirebaseAuthServices {
   final GoogleSignIn googleSignIn = GoogleSignIn();
 
   // Google sign-in
-  Future<void> signInWithGoogle() async {
+  Future<User?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleSignInAccount =
-      await googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
       if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
+        final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
         final AuthCredential authCredential = GoogleAuthProvider.credential(
           accessToken: googleSignInAuthentication.accessToken,
           idToken: googleSignInAuthentication.idToken,
         );
-        await auth.signInWithCredential(authCredential);
+        final userCredential = await auth.signInWithCredential(authCredential);
+        return userCredential.user;
       }
+      return null;
     } on FirebaseAuthException catch (e) {
       print(e.toString());
+      return null;
     }
   }
 
@@ -45,7 +46,6 @@ class FirebaseAuthServices {
         email: email,
         password: password,
       );
-      // Send verification email
       await result.user?.sendEmailVerification();
       return result.user;
     } on FirebaseAuthException catch (e) {

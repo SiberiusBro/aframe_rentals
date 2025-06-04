@@ -84,19 +84,10 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
     final guestId = widget.requesterId;
     final placeId = widget.reservationData['placeId'];
 
-    // 1. Pop and wait for navigation to finish
     if (mounted) Navigator.of(context).pop();
 
-    // 2. Use a global navigator key or root context, or use a callback from parent
-
-    // For simplicity: push to chat after pop using the root navigator context
-    // (Assuming you're returning to a parent screen that can call push to ChatScreen.)
-    // Otherwise, you can use a callback or pass a BuildContext down from the parent.
-
-    // One safe workaround:
     Future.delayed(const Duration(milliseconds: 350), () {
-      // Find a valid context (like using a globalKey), or just let parent handle push
-      // Here's the quick workaround with root navigator:
+
       Navigator.of(context, rootNavigator: true).push(
         MaterialPageRoute(
           builder: (_) => ChatScreen(
@@ -107,9 +98,7 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
       );
     });
 
-    // Optionally, also use a root context for Snackbar:
-    // (or move the snackbar to the parent screen)
-    // ScaffoldMessenger.of(context, rootNavigator: true).showSnackBar(...)
+
   }
 
   Future<void> _declineReservationWithReason() async {
@@ -173,7 +162,7 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
 
   Future<void> _doDecline(String reason, String description) async {
     setState(() => _declining = true);
-    // 1. Update reservation in Firestore
+
     await FirebaseFirestore.instance
         .collection('reservations')
         .doc(widget.reservationId)
@@ -183,14 +172,12 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
       'declineDescription': description,
     });
 
-    // 2. Get guest's device token
     final userSnap = await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.requesterId)
         .get();
     final guestToken = userSnap.data()?['deviceToken'];
 
-    // 3. Send FCM notification
     if (guestToken != null && guestToken is String && guestToken.isNotEmpty) {
       await CloudNotificationService.sendNotification(
         token: guestToken,
@@ -246,7 +233,6 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
             ),
             const SizedBox(height: 8),
 
-// "Booking request:" label
             const Text(
               "Booking request:",
               style: TextStyle(
@@ -256,7 +242,6 @@ class _BookingRequestDetailScreenState extends State<BookingRequestDetailScreen>
               ),
             ),
 
-// The oval user chip (as in previous message)
             if (requesterProfile != null) ...[
               GestureDetector(
                 onTap: () {

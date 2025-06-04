@@ -1,13 +1,13 @@
 class Review {
   final String? id;
   final String placeId;
-  final String userId;         // who wrote the review
+  final String userId;
   final String userName;
   final String? userProfilePic;
   final String comment;
   final double rating;
   final DateTime timestamp;
-  final String targetUserId;   // the user being reviewed (host or guest)
+  final String targetUserId;
 
   Review({
     this.id,

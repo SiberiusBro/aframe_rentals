@@ -60,8 +60,7 @@ class _ReviewPromptState extends State<ReviewPrompt> {
     final name = userDoc['name'] ?? 'Anonymous';
     final profilePic = userDoc['photoUrl'] ?? '';
 
-    // Set host as targetUserId (assuming Place.vendor == host UID)
-    final hostUid = widget.place.vendor; // Use .ownerId if that's the field!
+    final hostUid = widget.place.vendor;
 
     final review = Review(
       placeId: widget.place.id!,

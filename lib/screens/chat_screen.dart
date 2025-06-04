@@ -38,15 +38,12 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     chatId = _generateChatId();
-    // Mark messages as read for current user
     FirebaseFirestore.instance.collection('chats').doc(chatId).set({
       'participants': [currentUser!.uid, widget.otherUserId],
       'placeId': widget.placeId,
       'unreadCount_${currentUser!.uid}': 0,
     }, SetOptions(merge: true));
-    // Load other user profile for display
     _loadOtherUserProfile();
-    // Load current user's name if needed for participant names
     _updateParticipantNames();
   }
 
@@ -84,7 +81,6 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       }, SetOptions(merge: true));
     } catch (e) {
-      // Handle errors (e.g., if user docs don't exist)
     }
   }
 
@@ -102,7 +98,6 @@ class _ChatScreenState extends State<ChatScreen> {
         .doc(chatId)
         .collection('messages')
         .add(message.toJson());
-    // Update chat thread metadata (last message, unread count for recipient, timestamp)
     FirebaseFirestore.instance.collection('chats').doc(chatId).set({
       'lastMessage': text,
       'lastMessageTime': DateTime.now().toIso8601String(),
@@ -121,7 +116,6 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: GestureDetector(
           onTap: () {
-            // Navigate to other user's public profile
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => UserProfileScreen(userId: widget.otherUserId)),

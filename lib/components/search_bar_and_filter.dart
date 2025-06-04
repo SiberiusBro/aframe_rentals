@@ -41,7 +41,7 @@ class SearchBarAndFilter extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "  Where to?",
+                            "Where to?",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,

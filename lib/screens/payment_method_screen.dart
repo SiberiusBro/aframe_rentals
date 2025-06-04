@@ -74,13 +74,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       }
       setState(() => _isProcessing = true);
 
-      // Calculate total nights and amount
       int nights = widget.endDate.difference(widget.startDate).inDays;
       if (nights < 1) nights = 1;
       int totalAmount = nights * widget.place.price;
 
-      // Here: call your backend for payment intent, then confirm via Stripe.
-      // For this demo, we will just simulate as "paid"
       await Future.delayed(const Duration(seconds: 1)); // simulate payment
 
       await _createReservation('card', 'paid');

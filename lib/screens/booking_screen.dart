@@ -169,7 +169,6 @@ class _BookingScreenState extends State<BookingScreen> {
             calendarFormat: CalendarFormat.month,
             selectedDayPredicate: (day) {
               if (_startDate != null && _endDate != null) {
-                // This line is FIXED to only highlight days from start to end inclusive!
                 return !day.isBefore(_startDate!) && !day.isAfter(_endDate!);
               } else if (_startDate != null && _endDate == null) {
                 return isSameDay(day, _startDate!);
@@ -181,14 +180,12 @@ class _BookingScreenState extends State<BookingScreen> {
                 _focusedDay = selectedDay;
                 final today = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
 
-                // If selecting new range or reset
                 if (_startDate == null || (_startDate != null && _endDate != null)) {
                   if (!_unavailableDates.contains(today)) {
                     _startDate = today;
                     _endDate = null;
                   }
                 } else if (selectedDay.isAfter(_startDate!)) {
-                  // Only allow selecting an available range
                   if (_isRangeAvailable(_startDate!, selectedDay)) {
                     _endDate = selectedDay;
                   } else {

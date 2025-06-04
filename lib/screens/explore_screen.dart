@@ -26,7 +26,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Category> categories = [];
   String? selectedCategoryId;
 
-  // Search and Filters
   String searchQuery = '';
   double filterMinPrice = 0;
   double filterMaxPrice = 2000;

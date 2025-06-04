@@ -20,7 +20,6 @@ class UserService {
     final uid = _auth.currentUser!.uid;
     String? imageUrl = _auth.currentUser!.photoURL;
 
-    // 1) Upload avatar if provided:
     if (imageFile != null) {
       final ref = _storage.ref().child('user_avatars/$uid.jpg');
       await ref.putFile(imageFile);

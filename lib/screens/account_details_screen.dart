@@ -6,8 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'edit_profile_screen.dart';
-
 class AccountDetailsScreen extends StatefulWidget {
   const AccountDetailsScreen({super.key});
 
@@ -158,14 +156,13 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                 icon: const Icon(Icons.edit),
                 onPressed: () async {
                   await Navigator.pushNamed(context, '/edit-profile');
-                  _loadAllData(); // refresh after editing
+                  _loadAllData();
                 },
               ),
             ),
             const Divider(height: 32),
           ],
 
-          // If userType == 'host', show their places; otherwise show a guest message
           if (_userType == 'host') ...[
             if (_userPlaces.isEmpty)
               const Center(child: Text("No listings found."))

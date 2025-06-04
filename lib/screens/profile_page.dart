@@ -272,7 +272,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       },
                       child: profileInfo(Icons.payments_outlined, "Payments and payouts"),
                     ),
-                    // --- Remove or comment these for now ---
                     // profileInfo(Icons.settings_outlined, "Accessibility"),
                     // profileInfo(Icons.note_outlined, "Taxes"),
                     // profileInfo(Icons.translate, "Translation"),
@@ -291,7 +290,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       profileInfo(Icons.home_outlined, "Learn about hosting"),
                     ],
-                    // --- Support & Legal removed for now ---
                     // const SizedBox(height: 15),
                     // const Text("Support", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),
                     // const SizedBox(height: 25),

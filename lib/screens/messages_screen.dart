@@ -46,34 +46,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
             itemBuilder: (context, index) {
               final chatDoc = userChats[index];
               final data = chatDoc.data() as Map<String, dynamic>;
-              // Determine other participant
               final chatId = chatDoc.id;
               final parts = chatId.split('_');
               final otherUserId = parts.firstWhere((id) => id != currentUser!.uid);
               final placeId = parts.last;
-              // Retrieve chat metadata
               final lastMessageText = (data['lastMessage'] ?? '') as String;
               final hasUnread = data['unreadCount_${currentUser!.uid}'] != null &&
                   (data['unreadCount_${currentUser!.uid}'] as int) > 0;
-              // Format last message time if available
               String timeDisplay = '';
               if (data['lastMessageTime'] != null) {
                 try {
                   final DateTime messageTime = DateTime.parse(data['lastMessageTime']);
                   final now = DateTime.now();
                   if (now.difference(messageTime).inDays == 0) {
-                    // same day, show HH:mm
                     timeDisplay = MaterialLocalizations.of(context).formatTimeOfDay(
                       TimeOfDay.fromDateTime(messageTime),
                       alwaysUse24HourFormat: false,
                     );
                   } else {
-                    // older, show date
                     timeDisplay =
                         MaterialLocalizations.of(context).formatShortDate(messageTime);
                   }
                 } catch (e) {
-                  // If parsing fails or stored as Timestamp, handle accordingly
                   if (data['lastMessageTime'] is Timestamp) {
                     final ts = data['lastMessageTime'] as Timestamp;
                     final messageTime = ts.toDate();
@@ -112,7 +106,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     onDismissed: (direction) async {
-                      // Delete all messages in this chat from Firestore
                       final messagesRef = FirebaseFirestore.instance
                           .collection('chats')
                           .doc(chatId)
@@ -121,9 +114,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       for (var msgDoc in messagesSnap.docs) {
                         await msgDoc.reference.delete();
                       }
-                      // Delete the chat document itself
                       await FirebaseFirestore.instance.collection('chats').doc(chatId).delete();
-                      // Show feedback
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Conversation deleted")),
                       );

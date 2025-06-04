@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:aframe_rentals/screens/user_profile_screen.dart'; // adjust import as needed
+import 'package:aframe_rentals/screens/user_profile_screen.dart';
 import 'package:aframe_rentals/screens/place_detail_screen.dart';
 
-import '../models/place_model.dart'; // adjust import as needed
+import '../models/place_model.dart';
 
 class TripGuestScreen extends StatefulWidget {
   const TripGuestScreen({super.key});
@@ -203,40 +203,60 @@ class _TripGuestScreenState extends State<TripGuestScreen> {
           // Host profile summary with tap
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('users').doc(res['ownerId']).get(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const SizedBox.shrink();
-                  }
-                  var data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => UserProfileScreen(userId: res['ownerId']),
-                      ));
-                    },
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: (data['photoUrl'] != null && data['photoUrl'].toString().isNotEmpty)
-                              ? NetworkImage(data['photoUrl'])
-                              : null,
-                          backgroundColor: Colors.grey.shade300,
-                          radius: 22,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            data['name'] ?? 'Host',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 5),
+                  child: Text(
+                    "Host:",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple),
+                  ),
+                ),
+                FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('users').doc(res['ownerId']).get(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const SizedBox.shrink();
+                      }
+                      var data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => UserProfileScreen(userId: res['ownerId']),
+                          ));
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.deepPurple.shade100),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: (data['photoUrl'] != null && data['photoUrl'].toString().isNotEmpty)
+                                    ? NetworkImage(data['photoUrl'])
+                                    : null,
+                                backgroundColor: Colors.grey.shade300,
+                                radius: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  data['name'] ?? 'Host',
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right),
+                            ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
+                ),
+              ],
             ),
           ),
           // Place info section (simple version)
@@ -253,13 +273,14 @@ class _TripGuestScreenState extends State<TripGuestScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text(
-                      res['placeAddress'] ?? '',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        res['placeAddress'] ?? '',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const Spacer(),
-                    const Icon(Icons.attach_money, size: 18),
-                    Text(res['price'] != null ? '${res['price']}' : '', style: const TextStyle(fontSize: 15)),
+                    // Am eliminat Spacer, Icon și Textul cu suma!
                   ],
                 ),
                 if (res['placeDescription'] != null && res['placeDescription'].toString().isNotEmpty)
@@ -268,7 +289,14 @@ class _TripGuestScreenState extends State<TripGuestScreen> {
                     child: Text(res['placeDescription'], style: const TextStyle(fontSize: 14)),
                   ),
                 const SizedBox(height: 4),
-                TextButton(
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurple,
+                    elevation: 0,
+                    side: const BorderSide(color: Colors.deepPurple),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                   child: const Text('View Place Details'),
                   onPressed: () async {
                     final placeId = res['placeId'];
@@ -293,6 +321,13 @@ class _TripGuestScreenState extends State<TripGuestScreen> {
                 ),
                 const SizedBox(height: 4),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurple,
+                    elevation: 0,
+                    side: const BorderSide(color: Colors.deepPurple),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                   child: const Text("Review"),
                   onPressed: () => showGuestReviewDialog(res),
                 ),
