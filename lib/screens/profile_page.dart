@@ -344,7 +344,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 20),
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 20),
-                    const Text("Version 24.34 (28004615)", style: TextStyle(fontSize: 10)),
+                    const Text("Version 1.3", style: TextStyle(fontSize: 10)),
                     const SizedBox(height: 50),
                   ],
                 ),
