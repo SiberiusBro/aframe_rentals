@@ -1,19 +1,88 @@
-//screens/location_picker_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
 
 class LocationPickerScreen extends StatefulWidget {
+  const LocationPickerScreen({super.key});
+
   @override
-  _LocationPickerScreenState createState() => _LocationPickerScreenState();
+  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   final TextEditingController _searchController = TextEditingController();
   GoogleMapController? _mapController;
+
   LatLng _selectedLocation = const LatLng(45.7489, 21.2087);
+
+  bool _isLoading = true;
+
   final String _sessionToken = const Uuid().v4();
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location services are deactivated.')),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Permissions for geolocation were rejected.')),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permissions for geolocation were not activated, Please go to settings.')),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _selectedLocation = LatLng(position.latitude, position.longitude);
+        _isLoading = false;
+      });
+
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(_selectedLocation, 15.0),
+      );
+    } catch (e) {
+      debugPrint("Error in fetching location information: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
 
   @override
   void dispose() {
@@ -25,7 +94,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Select Location')),
-      body: Stack(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
         children: [
           GoogleMap(
             initialCameraPosition: CameraPosition(
@@ -37,6 +108,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               Marker(
                 markerId: const MarkerId('selected-location'),
                 position: _selectedLocation,
+                draggable: true,
+                onDragEnd: (newPosition) {
+                  setState(() {
+                    _selectedLocation = newPosition;
+                  });
+                },
               ),
             },
             onTap: (LatLng position) {
@@ -57,22 +134,24 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 textEditingController: _searchController,
                 googleAPIKey: 'AIzaSyBukfII7TCZPVkPCk49PG4du-7GlQ7YLcs',
                 inputDecoration: const InputDecoration(
-                  hintText: 'Search location',
+                  hintText: 'Search for location',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(15),
                 ),
                 debounceTime: 800,
                 isLatLngRequired: true,
                 getPlaceDetailWithLatLng: (prediction) {
-                  setState(() {
-                    _selectedLocation = LatLng(
-                      double.parse(prediction.lat!),
-                      double.parse(prediction.lng!),
+                  if (prediction.lat != null && prediction.lng != null) {
+                    setState(() {
+                      _selectedLocation = LatLng(
+                        double.parse(prediction.lat!),
+                        double.parse(prediction.lng!),
+                      );
+                    });
+                    _mapController?.animateCamera(
+                      CameraUpdate.newLatLngZoom(_selectedLocation, 15.0),
                     );
-                  });
-                  _mapController?.animateCamera(
-                    CameraUpdate.newLatLng(_selectedLocation),
-                  );
+                  }
                 },
                 itemClick: (prediction) {
                   _searchController.text = prediction.description!;
@@ -85,11 +164,23 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pop(context, _selectedLocation);
-        },
-        child: const Icon(Icons.check),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'recenter_fab',
+            onPressed: _getCurrentLocation,
+            child: const Icon(Icons.my_location),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: 'confirm_fab',
+            onPressed: () {
+              Navigator.pop(context, _selectedLocation);
+            },
+            child: const Icon(Icons.check),
+          ),
+        ],
       ),
     );
   }

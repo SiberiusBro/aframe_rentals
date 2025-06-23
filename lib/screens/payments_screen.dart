@@ -39,7 +39,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     if (_card == null || !_card!.complete) return;
     setState(() => _isSaving = true);
 
-    // Simulate storing only safe card metadata (never the number)
     final cardData = {
       'brand': _card!.brand ?? "Unknown",
       'last4': _card!.last4 ?? "----",

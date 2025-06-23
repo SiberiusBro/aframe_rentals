@@ -126,7 +126,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       return;
                     }
 
-                    // --- Step 7: Persistence ---
                     if (kIsWeb) {
                       await FirebaseAuth.instance.setPersistence(
                         keepLoggedIn

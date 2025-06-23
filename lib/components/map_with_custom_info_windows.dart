@@ -1,4 +1,3 @@
-//components/map_with_custom_info_windows.dart
 import 'package:aframe_rentals/components/my_icon_button.dart';
 import 'package:another_carousel_pro/another_carousel_pro.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -34,6 +33,8 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
     final Size size = MediaQuery.of(context).size;
     placeCollection.where('isActive', isEqualTo: true).snapshots().listen((snapshot) {
       if (snapshot.docs.isEmpty) return;
+      if (!mounted) return;
+
       final List<Marker> newMarkers = [];
       for (final doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
@@ -60,16 +61,12 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
     });
   }
 
+  // MODIFICAT: Această funcție a fost actualizată pentru a schimba layout-ul.
   Widget _buildInfoWindow(Map<String, dynamic> data, String placeId, LatLng position, Size size) {
     final provider = TheProvider.of(context, listen: false);
     final bool isFav = provider.favorites.contains(placeId);
-    // Rating and review count
-    double rating = (data['rating'] ?? 0).toDouble();
-    final int reviewCount = data['review'] ?? 0;
-    if (reviewCount == 0) {
-      rating = 0.0;
-    }
-    // Currency formatting for price
+
+    // Formatarea prețului rămâne la fel.
     Locale locale = Localizations.localeOf(context);
     String countryCode = locale.countryCode ?? 'US';
     String currencySymbol;
@@ -101,12 +98,13 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
       height: size.height * 0.32,
       width: size.width * 0.8,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))]
       ),
       child: Column(
         children: [
-          // Image carousel with icons
+          // Carousel-ul de imagini și iconițele de sus rămân la fel
           Stack(
             children: [
               SizedBox(
@@ -125,11 +123,9 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                   ),
                 ),
               ),
-              // Open details on image tap
               Positioned.fill(
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pop(context); // close map bottom sheet
                     final placeMap = Map<String, dynamic>.from(data);
                     placeMap['id'] = placeId;
                     final place = Place.fromJson(placeMap);
@@ -141,13 +137,12 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                   child: Container(color: Colors.transparent),
                 ),
               ),
-              // Top row with favorite and close icons
               Positioned(
                 top: 10,
                 left: 14,
                 right: 14,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 12),
@@ -160,80 +155,82 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const Spacer(),
-                    InkWell(
-                      onTap: () async {
-                        await provider.toggleFavoriteById(placeId);
-                        _customInfoWindowController.addInfoWindow!(
-                          _buildInfoWindow(data, placeId, position, size),
-                          position,
-                        );
-                      },
-                      child: MyIconButton(
-                        icon: isFav ? Icons.favorite : Icons.favorite_border,
-                        radius: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 13),
-                    InkWell(
-                      onTap: () => _customInfoWindowController.hideInfoWindow!(),
-                      child: const MyIconButton(icon: Icons.close, radius: 15),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () async {
+                            await provider.toggleFavoriteById(placeId);
+                            _customInfoWindowController.addInfoWindow!(
+                              _buildInfoWindow(data, placeId, position, size),
+                              position,
+                            );
+                          },
+                          child: MyIconButton(
+                            icon: isFav ? Icons.favorite : Icons.favorite_border,
+                            radius: 15,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _customInfoWindowController.hideInfoWindow!(),
+                          child: const MyIconButton(icon: Icons.close, radius: 15),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          // Place summary info
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-                final placeMap = Map<String, dynamic>.from(data);
-                placeMap['id'] = placeId;
-                final place = Place.fromJson(placeMap);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => PlaceDetailScreen(place: place)),
-                );
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        data["address"] ?? '',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.star, color: Colors.black54),
-                      const SizedBox(width: 5),
-                      Text(rating.toStringAsFixed(1), style: const TextStyle(fontSize: 16)),
-                    ],
-                  ),
-                  Text(
-                    "$reviewCount reviews",
-                    style: const TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
-                  Text(
-                    data['date'] ?? '',
-                    style: const TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
-                  Text.rich(
-                    TextSpan(
-                      text: priceText,
+          // MODIFICAT: Secțiunea de informații a fost complet refăcută
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: GestureDetector(
+                onTap: () {
+                  final placeMap = Map<String, dynamic>.from(data);
+                  placeMap['id'] = placeId;
+                  final place = Place.fromJson(placeMap);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => PlaceDetailScreen(place: place)),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Afișăm titlul locației
+                    Text(
+                      data["title"] ?? 'Nume Indisponibil',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      children: const [
-                        TextSpan(
-                          text: "/night",
-                          style: TextStyle(fontWeight: FontWeight.normal),
-                        ),
-                      ],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    // Afișăm adresa sub titlu
+                    Text(
+                      data['address'] ?? '',
+                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Afișăm prețul
+                    Text.rich(
+                      TextSpan(
+                        text: priceText,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        children: const [
+                          TextSpan(
+                            text: "/noapte", // Am tradus în română
+                            style: TextStyle(fontWeight: FontWeight.normal, color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -243,26 +240,27 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
   }
 
   Future<void> _moveCameraToFitAllMarkers() async {
-    if (markers.isEmpty) return;
-    LatLngBounds bounds;
+    if (markers.isEmpty || googleMapController == null) return;
+
     if (markers.length == 1) {
-      final pos = markers.first.position;
-      bounds = LatLngBounds(southwest: pos, northeast: pos);
-    } else {
-      final latitudes = markers.map((m) => m.position.latitude).toList();
-      final longitudes = markers.map((m) => m.position.longitude).toList();
-      bounds = LatLngBounds(
-        southwest: LatLng(
-          latitudes.reduce((a, b) => a < b ? a : b),
-          longitudes.reduce((a, b) => a < b ? a : b),
-        ),
-        northeast: LatLng(
-          latitudes.reduce((a, b) => a > b ? a : b),
-          longitudes.reduce((a, b) => a > b ? a : b),
-        ),
-      );
+      googleMapController!.animateCamera(CameraUpdate.newLatLngZoom(markers.first.position, 14));
+      return;
     }
-    await googleMapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+
+    LatLngBounds bounds;
+    final latitudes = markers.map((m) => m.position.latitude).toList();
+    final longitudes = markers.map((m) => m.position.longitude).toList();
+    bounds = LatLngBounds(
+      southwest: LatLng(
+        latitudes.reduce((a, b) => a < b ? a : b),
+        longitudes.reduce((a, b) => a < b ? a : b),
+      ),
+      northeast: LatLng(
+        latitudes.reduce((a, b) => a > b ? a : b),
+        longitudes.reduce((a, b) => a > b ? a : b),
+      ),
+    );
+    googleMapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
   }
 
   @override
@@ -284,7 +282,6 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
               width: size.width,
               child: Stack(
                 children: [
-                  // Map
                   SizedBox(
                     height: size.height * 0.77,
                     child: GoogleMap(
@@ -293,8 +290,8 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                       rotateGesturesEnabled: true,
                       tiltGesturesEnabled: true,
                       initialCameraPosition: const CameraPosition(
-                        target: LatLng(0, 0),
-                        zoom: 1,
+                        target: LatLng(45.9432, 24.9668), // Centrat pe România
+                        zoom: 6,
                       ),
                       onMapCreated: (controller) {
                         googleMapController = controller;
@@ -306,7 +303,6 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
                       markers: markers.toSet(),
                     ),
                   ),
-                  // Custom info window overlay
                   CustomInfoWindow(
                     controller: _customInfoWindowController,
                     height: size.height * 0.34,
@@ -343,7 +339,7 @@ class _MapWithCustomInfoWindowsState extends State<MapWithCustomInfoWindows> {
           children: [
             SizedBox(width: 5),
             Text(
-              "Map",
+              "Hartă", // Am tradus
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
             SizedBox(width: 5),

@@ -57,12 +57,6 @@ class DisplayPlace extends StatelessWidget {
     } else {
       priceDisplay = "$currencySymbol$priceStr";
     }
-    double displayRating = place.rating;
-    if (place.review == 0) {
-      displayRating = 0.0;
-    }
-    String ratingStr = displayRating.toStringAsFixed(1);
-    final String reviewLabel = place.review == 1 ? "review" : "reviews";
 
     // Use provider for wishlist logic
     final provider = TheProvider.of(context);
@@ -135,7 +129,6 @@ class DisplayPlace extends StatelessWidget {
                     }).toList(),
                   ),
                 Text("$priceDisplay/night"),
-                Text("⭐ $ratingStr (${place.review} $reviewLabel)"),
               ],
             ),
           ),

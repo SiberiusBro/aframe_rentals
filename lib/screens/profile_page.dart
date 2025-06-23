@@ -288,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         },
                         child: profileInfo(Icons.add_home_outlined, "List your space"),
                       ),
-                      profileInfo(Icons.home_outlined, "Learn about hosting"),
+                      //profileInfo(Icons.home_outlined, "Learn about hosting"),
                     ],
                     // const SizedBox(height: 15),
                     // const Text("Support", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 25)),

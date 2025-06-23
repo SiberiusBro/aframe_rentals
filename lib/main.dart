@@ -1,6 +1,4 @@
 //main.dart
-import 'package:aframe_rentals/models/category.dart';
-import 'package:aframe_rentals/models/place_model.dart';
 import 'package:aframe_rentals/screens/account_details_screen.dart';
 import 'package:aframe_rentals/screens/complete_profile_screen.dart';
 import 'package:aframe_rentals/screens/edit_profile_screen.dart';
@@ -32,7 +30,6 @@ void main() async {
   await Stripe.instance.applySettings();
   await Firebase.initializeApp();
 
-  // 🔐 Save the token if the user is already logged in
   if (FirebaseAuth.instance.currentUser != null) {
     await DeviceTokenService.saveTokenToFirestore();
   }
