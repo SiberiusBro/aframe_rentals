@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: [
           BottomNavigationBarItem(
             icon: Image.network(
-              "https://cdn3.iconfinder.com/data/icons/feather-5/24/search-512.png",
+              "https://icons.veryicon.com/png/o/miscellaneous/ios-icon-library/compass-compass-1.png",
               height: 30,
               color: selectedIndex == 0 ? Colors.blueAccent : Colors.black45,
             ),

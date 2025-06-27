@@ -343,9 +343,9 @@ class _TripGuestScreenState extends State<TripGuestScreen> {
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
     return Scaffold(
-      appBar: AppBar(title: const Text("My Trips")),
+      appBar: AppBar(title: const Text("My Trips"), ),
       body: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(11.0),
         child: reservations.isEmpty
             ? const Center(child: Text("No trips found."))
             : ListView.builder(
