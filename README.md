@@ -1,16 +1,17 @@
-# aframe_rentals
+Stay Finder
 
-A new Flutter project.
+1. Se clonează repository-ul : git clone <https://github.com/SiberiusBro/aframe_rentals.git>
 
-## Getting Started
+2. Se instalează toate dependențele Flutter: flutter pub get
 
-This project is a starting point for a Flutter application.
+3. Pentru funcțiile cloud Firebase (folder functions): cd functions > npm install
 
-A few resources to get you started if this is your first Flutter project:
+4. Trebuie adăugate in Firebase Console amprentele dispozitivului (SHA-1 și SHA-256)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+5. Se instaleaza fisierul google-services.json din cosola Firebase și se adaugă în codul sură în această ordine
+|__android
+|_____app
+|_______(aici)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+7. Se rulează aplicația pe un dispozitiv android (de preferat un telefon virtual)
+
